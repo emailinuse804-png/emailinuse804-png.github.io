@@ -7,12 +7,13 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/10.14.1/firebas
  * Firebase Console -> Project Settings -> General -> Your apps -> SDK setup and configuration
  */
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAPkKTtNQQnBK5Oj9XuoZhSpSvRXJl8YxY",
+  authDomain: "testing-c781b.firebaseapp.com",
+  projectId: "testing-c781b",
+  storageBucket: "testing-c781b.firebasestorage.app",
+  messagingSenderId: "916663078402",
+  appId: "1:916663078402:web:d0a2cb7c4356ff542da11b",
+  measurementId: "G-JQLYDQ7J6J"
 };
 
 const app = initializeApp(firebaseConfig);
