@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A real-time chat application built with Firebase and vanilla JavaScript.">
+  <title>Realtime Chat | Firebase + GitHub Pages</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+  <noscript>
+    <div class="noscript-warning">
+      This application requires JavaScript to run.
+    </div>
+  </noscript>
+
+  <div id="appShell">
+    <section id="loadingScreen" class="screen">
+      <div class="card loading-card">
+        <div class="spinner" aria-hidden="true"></div>
+        <h1>Loading chat...</h1>
+        <p id="loadingText">Checking your session.</p>
+      </div>
+    </section>
+
+    <section id="loginScreen" class="screen hidden">
+      <div class="card login-card">
+        <h1>Realtime Chat</h1>
+        <p class="subtitle">
+          Sign in with Google to join the conversation instantly.
+        </p>
+
+        <button id="googleSignInBtn" class="btn btn-google" type="button">
+          <span class="google-icon" aria-hidden="true">G</span>
+          Continue with Google
+        </button>
+
+        <p id="loginHint" class="hint">
+          Your session stays active until you sign out.
+        </p>
+      </div>
+    </section>
+
+    <section id="chatScreen" class="screen hidden">
+      <div class="chat-layout">
+        <header class="chat-header">
+          <div class="brand-block">
+            <h2>Realtime Chat</h2>
+            <p id="onlineSummary">0 users online</p>
+          </div>
+
+          <div class="header-right">
+            <div id="onlineUsers" class="online-users" aria-label="Online users"></div>
+
+            <div class="current-user-block">
+              <img id="currentUserAvatar" class="avatar" src="" alt="Your profile photo">
+              <div class="current-user-meta">
+                <strong id="currentUserName">Guest</strong>
+                <span>Signed in</span>
+              </div>
+            </div>
+
+            <button id="signOutBtn" class="btn btn-secondary" type="button">Sign out</button>
+          </div>
+        </header>
+
+        <main id="messagesContainer" class="messages-container" aria-live="polite">
+          <ul id="messagesList" class="messages-list"></ul>
+          <div id="messagesEmptyState" class="empty-state">
+            No messages yet. Start the conversation.
+          </div>
+        </main>
+
+        <footer class="chat-footer">
+          <form id="messageForm" class="message-form">
+            <label class="sr-only" for="messageInput">Type your message</label>
+            <input
+              id="messageInput"
+              class="message-input"
+              type="text"
+              name="message"
+              maxlength="500"
+              placeholder="Type a message..."
+              autocomplete="off"
+              required
+            >
+            <button id="sendBtn" class="btn btn-primary" type="submit">Send</button>
+          </form>
+          <div class="footer-meta">
+            <span id="charCounter">0 / 500</span>
+            <span id="statusText" role="status" aria-live="polite"></span>
+          </div>
+        </footer>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
