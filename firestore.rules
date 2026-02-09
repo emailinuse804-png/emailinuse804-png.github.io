@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidMessage() {
+      return request.resource.data.keys().hasOnly([
+        "uid",
+        "displayName",
+        "photoURL",
+        "text",
+        "createdAt"
+      ])
+      && request.resource.data.uid == request.auth.uid
+      && request.resource.data.displayName is string
+      && request.resource.data.displayName.size() > 0
+      && request.resource.data.displayName.size() <= 80
+      && request.resource.data.photoURL is string
+      && request.resource.data.photoURL.size() <= 500
+      && request.resource.data.text is string
+      && request.resource.data.text.size() > 0
+      && request.resource.data.text.size() <= 500
+      && request.resource.data.createdAt == request.time;
+    }
+
+    function isValidPresence() {
+      return request.resource.data.keys().hasOnly([
+        "uid",
+        "displayName",
+        "photoURL",
+        "state",
+        "lastActive"
+      ])
+      && request.resource.data.uid == request.auth.uid
+      && request.resource.data.displayName is string
+      && request.resource.data.displayName.size() > 0
+      && request.resource.data.displayName.size() <= 80
+      && request.resource.data.photoURL is string
+      && request.resource.data.photoURL.size() <= 500
+      && request.resource.data.state in ["online", "offline"]
+      && request.resource.data.lastActive == request.time;
+    }
+
+    match /messages/{messageId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidMessage();
+      allow update, delete: if false;
+    }
+
+    match /presence/{userId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && userId == request.auth.uid && isValidPresence();
+      allow delete: if isSignedIn() && userId == request.auth.uid;
+    }
+  }
+}
