@@ -21,3 +21,8 @@ node_modules/
 # OS/editor noise
 .DS_Store
 Thumbs.db
+
+# CursorOS build artifacts
+os/build/
+os/CursorOS.iso
+os/iso/boot/kernel.bin
