@@ -1,57 +1,131 @@
 # CursorOS
 
-A custom Linux distribution built entirely with Cursor AI. CursorOS is a full desktop operating system with a graphical UI, web browser, internet connectivity, and the ability to install software -- including AI tools like Ollama.
+A premium desktop operating system built entirely with Cursor AI. macOS-inspired design, Windows-class feature set, and AI-ready out of the box.
 
-## Features
+## What is CursorOS?
 
-- **Windows-like Desktop** - XFCE4 with bottom taskbar, start menu, system tray, window snapping
-- **Web Browser** - Firefox ESR pre-installed for full internet browsing
-- **Internet Access** - NetworkManager with WiFi and Ethernet support out of the box
-- **Software Installation** - Install anything via `apt`, `cursoros-install`, or `curl`
-- **Ollama AI Support** - One-command installer for running local AI models (`install-ollama`)
-- **Live Boot** - Runs directly from USB or CD without installing to disk
-- **Dark Theme** - Modern dark UI with custom CursorOS branding
-- **Pre-installed Tools** - Terminal, file manager, text editor, task manager, htop, neofetch, git, and more
+CursorOS is a custom Linux distribution that delivers a polished desktop experience comparable to macOS and Windows. It boots from a USB drive or CD as a live system — no installation required — and comes pre-loaded with everything you need: a web browser, office suite, image editor, media player, app store, and one-command Ollama AI installation.
 
-## Screenshots
+## Highlights
 
-After booting, you'll see:
-- A GRUB boot menu with CursorOS branding
-- Auto-login to a dark-themed XFCE4 desktop
-- Bottom taskbar with Applications menu (like Windows Start), window list, system tray, clock
-- Desktop icons for Firefox, Terminal, and Files
-- Network applet in the system tray for WiFi/Ethernet
+- **macOS-inspired Design** — WhiteSur dark theme, Plank dock with zoom hover, top menu bar, picom compositor with rounded corners, shadows, and transparency
+- **Full Web Browser** — Firefox ESR with internet access out of the box
+- **Office Suite** — LibreOffice Writer, Calc, Impress, Draw, Math
+- **Image & Vector Editing** — GIMP and Inkscape
+- **Media Playback** — VLC, Parole, full codec support (H.264, H.265, AAC, etc.)
+- **App Store** — GNOME Software with Flatpak and Flathub
+- **Printing & Bluetooth** — CUPS and Blueman
+- **Ollama AI** — One command to install and run local LLMs
+- **Networking** — WiFi, Ethernet, VPN (OpenVPN) via NetworkManager
+- **~6 GB ISO** — comparable to a Windows install image
 
 ## Quick Start
 
-### Running the Pre-built ISO
-
 ```bash
-# In QEMU (recommended for testing)
-qemu-system-x86_64 -cdrom CursorOS-2.0.0-amd64.iso -m 2G -enable-kvm -smp 2
+# Build the ISO (requires Debian/Ubuntu + root)
+cd os && sudo ./build.sh
 
-# In VirtualBox: Create VM > Settings > Storage > Add CursorOS ISO > Boot
+# Run in QEMU
+qemu-system-x86_64 -cdrom CursorOS-3.0.0-amd64.iso -m 4G -enable-kvm -smp 2 -vga virtio
+
+# Write to USB
+sudo dd if=CursorOS-3.0.0-amd64.iso of=/dev/sdX bs=4M status=progress
 ```
 
-### Default Login
+**Login:** `cursor` / `cursor` (auto-login enabled, passwordless sudo)
 
-- **Username:** `cursor`
-- **Password:** `cursor`
-- Auto-login is enabled (boots straight to desktop)
-- User has passwordless sudo
+## Desktop
 
-## Building the ISO
+CursorOS uses a macOS-inspired layout:
 
-### Prerequisites
+| Element | Description |
+|---------|-------------|
+| **Top bar** | App menu, folder shortcuts, centered clock, system tray (WiFi, Bluetooth, volume, battery, notifications) |
+| **Plank dock** | Bottom dock with pinned apps, zoom-on-hover, auto-hide. Firefox, Files, Terminal, LibreOffice, GIMP, VLC, Settings, App Store |
+| **Window buttons** | Close / minimize / maximize on the **left** (macOS-style) |
+| **Compositor** | Picom: drop shadows, rounded corners, fade animations, per-window transparency |
+| **Theme** | WhiteSur-Dark (GTK + icons + cursors), Fira Code for terminal |
 
-A **Debian or Ubuntu** host system with:
-- ~10 GB free disk space
-- Root access (sudo)
-- Internet connection
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Super` | Open App Menu |
+| `Super+Space` | App Finder (Spotlight-like) |
+| `Ctrl+Alt+T` | Terminal |
+| `Super+E` | File Manager |
+| `Super+B` | Browser |
+| `Super+I` | Settings |
+| `Super+L` | Lock Screen |
+| `Super+D` | Show Desktop |
+| `Super+Left/Right` | Tile window |
+| `Super+Up` | Maximize |
+| `Super+F` | Fullscreen |
+| `Super+C` | Calculator |
+| `Super+V` | Clipboard history |
+| `Alt+Tab` | Switch windows |
+| `Print` | Screenshot (Flameshot) |
+
+## Installing Software
+
+### App Store
+
+Click the **App Store** icon in the dock (GNOME Software). Browse and install apps from Flatpak/Flathub with one click.
+
+### Terminal
 
 ```bash
-# The build script installs its own dependencies, but you can pre-install:
-sudo apt install debootstrap squashfs-tools xorriso grub-pc-bin grub-efi-amd64-bin mtools
+cursoros-install vlc             # Install a package
+cursoros-install --search video  # Search
+cursoros-install --popular       # List popular packages
+sudo apt install <anything>     # Full Debian repos
+```
+
+### Ollama AI
+
+```bash
+install-ollama                   # Install Ollama
+install-ollama --with-model      # Install + download starter model
+
+ollama pull llama3.2             # Llama 3.2 (2GB)
+ollama pull codellama            # Code Llama (3.8GB)
+ollama pull deepseek-r1:8b       # DeepSeek R1 (4.7GB)
+ollama run llama3.2              # Start chatting
+```
+
+## Pre-installed Software
+
+| Category | Software |
+|----------|----------|
+| **Desktop** | XFCE4 + Plank Dock + Picom compositor |
+| **Browser** | Firefox ESR |
+| **Office** | LibreOffice (Writer, Calc, Impress, Draw, Math) |
+| **Graphics** | GIMP, Inkscape, Shotwell, Ristretto, Drawing |
+| **Media** | VLC, Parole, Celluloid, Cheese (webcam), ffmpeg |
+| **System** | htop, btop, neofetch, GParted, GNOME Disks, Baobab |
+| **Utilities** | GNOME Calculator, Calendar, Clocks, Evince (PDF), Flameshot, Simple Scan |
+| **Development** | Python 3, Node.js, GCC, CMake, Git |
+| **Networking** | NetworkManager, Bluetooth, OpenVPN |
+| **Printing** | CUPS + all major printer drivers |
+| **Security** | GNOME Keyring, Seahorse |
+| **Backup** | Timeshift |
+| **App Store** | GNOME Software + Flatpak (Flathub) |
+| **AI** | Ollama (via installer) |
+
+## Building
+
+### Requirements
+
+- Debian 12+ or Ubuntu 22.04+ host
+- ~15 GB free disk space
+- Root access (sudo)
+- Internet connection
+- Build time: **30-60 minutes**
+
+```bash
+# The build script handles its own dependencies, but you can pre-install:
+sudo apt install debootstrap squashfs-tools xorriso grub-pc-bin \
+    grub-efi-amd64-bin mtools git
 ```
 
 ### Build
@@ -61,217 +135,113 @@ cd os
 sudo ./build.sh
 ```
 
-The build takes **20-40 minutes** depending on your internet speed. It will:
-1. Bootstrap a minimal Debian 12 (Bookworm) system
-2. Install XFCE4 desktop, Firefox, NetworkManager, and all utilities
-3. Apply CursorOS branding (wallpaper, theme, login screen, MOTD)
-4. Install custom scripts (Ollama installer, help, package manager)
-5. Create a compressed squashfs filesystem
-6. Generate a bootable ISO with GRUB2
-
-Output: `CursorOS-2.0.0-amd64.iso`
-
-### Clean
+### Options
 
 ```bash
-sudo ./build.sh --clean
+sudo ./build.sh                # Full build with WhiteSur themes
+sudo ./build.sh --skip-themes  # Skip WhiteSur download (uses Papirus/Arc)
+sudo ./build.sh --clean        # Remove all build artifacts
 ```
 
-## Using CursorOS
+## Running
 
-### Desktop
-
-The desktop uses a **Windows-like layout**:
-
-| Element | Description |
-|---------|-------------|
-| Bottom panel | Taskbar with app menu, window list, tray, clock |
-| Applications menu | Click "Applications" (bottom-left) or press Super key |
-| Window snapping | Drag to edges, or Super+Arrow keys |
-| Right-click desktop | Desktop menu with options |
-
-### Keyboard Shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| `Super` (Win key) | Open Applications menu |
-| `Ctrl+Alt+T` | Open Terminal |
-| `Ctrl+Alt+Delete` | Task Manager |
-| `Super+E` | File Manager |
-| `Super+L` | Lock Screen |
-| `Super+D` | Show Desktop |
-| `Super+Left/Right` | Tile window left/right |
-| `Super+Up/Down` | Maximize/Minimize |
-| `Alt+Tab` | Switch windows |
-| `Alt+F4` | Close window |
-| `Alt+F2` | Run command |
-| `Print Screen` | Screenshot |
-
-### Installing Software
+### QEMU (recommended for testing)
 
 ```bash
-# The friendly way
-cursoros-install firefox     # Install a package
-cursoros-install --search video  # Search packages
-cursoros-install --popular   # Show popular packages
-
-# Or use apt directly
-sudo apt install vlc
-sudo apt install nodejs npm
-sudo apt install docker.io
+qemu-system-x86_64 \
+    -cdrom CursorOS-3.0.0-amd64.iso \
+    -m 4G \
+    -enable-kvm \
+    -smp 2 \
+    -vga virtio
 ```
 
-### Installing Ollama (AI)
+### VirtualBox
 
-CursorOS comes with a dedicated Ollama installer:
+1. New VM → Type: Linux, Version: Debian (64-bit)
+2. RAM: 4096 MB, Processors: 2
+3. Skip hard disk
+4. Settings → Storage → Add optical drive → select ISO
+5. Settings → Display → Video Memory: 128 MB, enable 3D acceleration
+6. Start
 
-```bash
-# Install Ollama
-install-ollama
-
-# Install Ollama + download a starter model
-install-ollama --with-model
-
-# After installation:
-ollama pull llama3.2        # Download Llama 3.2 (2GB)
-ollama pull phi3            # Download Phi-3 (2.3GB)
-ollama pull codellama       # Download Code Llama (3.8GB)
-ollama pull llama3.2:1b     # Tiny 1B model (700MB)
-ollama run llama3.2         # Chat with a model
-```
-
-The Ollama API is available at `http://localhost:11434` for integration with other tools.
-
-### Networking
-
-- **WiFi:** Click the network icon in the system tray, or run `nmtui` in terminal
-- **Ethernet:** Automatically configured via DHCP
-- **Manual config:** `nmcli`, `nmtui`, or NetworkManager GUI applet
-
-### Help
+### Real Hardware
 
 ```bash
-cursoros-help     # Quick reference card
-cursoros-about    # About CursorOS
-neofetch          # System info with ASCII art
-```
-
-## Writing to USB
-
-```bash
-# Find your USB device (BE CAREFUL - wrong device = data loss!)
-lsblk
-
-# Write the ISO (replace /dev/sdX with your actual USB device)
-sudo dd if=CursorOS-2.0.0-amd64.iso of=/dev/sdX bs=4M status=progress
+# CAREFUL - replace /dev/sdX with your actual USB device!
+lsblk   # Find your USB
+sudo dd if=CursorOS-3.0.0-amd64.iso of=/dev/sdX bs=4M status=progress
 sync
 ```
 
-Boot from USB in your BIOS/UEFI boot menu. Supports both Legacy BIOS and UEFI boot.
+Boot from USB in BIOS/UEFI. Supports both Legacy and UEFI boot.
+
+## System Requirements
+
+| | Minimum | Recommended |
+|--|---------|-------------|
+| RAM | 2 GB | 4+ GB |
+| CPU | 1 core x86_64 | 2+ cores |
+| Disk | Live mode (0 GB) | 20+ GB for persistence |
+| GPU | Any | VESA/Intel/AMD/NVIDIA |
+
+For Ollama: 4+ GB RAM, 8+ GB recommended for larger models.
 
 ## Project Structure
 
 ```
 os/
-├── build.sh                    # Main ISO build script
-├── Makefile                    # Build targets (iso, bare-metal, clean)
-├── README.md                   # This file
+├── build.sh                         # 10-phase ISO build script
+├── Makefile                         # make iso / make bare-metal
 │
-├── includes/                   # Files overlaid onto the rootfs
-│   ├── etc/
-│   │   └── skel/               # Default user home directory template
-│   │       ├── .config/
-│   │       │   ├── xfce4/      # XFCE desktop configuration
-│   │       │   │   ├── xfconf/ # Panel, desktop, WM, theme settings
-│   │       │   │   └── panel/  # Whisker menu (Start menu) config
-│   │       │   └── autostart/  # Apps that start with desktop
-│   │       └── Desktop/        # Desktop shortcut icons
-│   └── usr/
-│       └── share/
-│           └── applications/   # .desktop files for app menu
+├── includes/                        # Overlay files → rootfs
+│   └── etc/skel/                    # User home template
+│       ├── .bashrc                  # Premium shell config
+│       └── .config/
+│           ├── xfce4/               # Desktop, panel, WM, terminal
+│           ├── picom/picom.conf     # Compositor effects
+│           ├── plank/dock1/         # Dock layout + pinned apps
+│           ├── autostart/           # Plank, picom, nm, bluetooth, etc.
+│           └── redshift/            # Night light config
 │
-├── scripts/                    # Custom CursorOS commands
-│   ├── install-ollama.sh       # Ollama AI installer
-│   ├── cursoros-help.sh        # Help quick reference
-│   ├── cursoros-install.sh     # Friendly package installer
-│   └── cursoros-about.sh       # About CursorOS
+├── scripts/                         # Custom CursorOS commands
+│   ├── install-ollama.sh            # → /usr/local/bin/install-ollama
+│   ├── cursoros-help.sh             # → /usr/local/bin/cursoros-help
+│   ├── cursoros-install.sh          # → /usr/local/bin/cursoros-install
+│   └── cursoros-about.sh            # → /usr/local/bin/cursoros-about
 │
-└── bare-metal/                 # Original bare-metal x86 kernel
-    ├── boot/                   # Assembly bootloader
-    ├── kernel/                 # C kernel (shell, GDT, IDT, memory)
-    ├── drivers/                # VGA, keyboard, timer drivers
-    ├── lib/                    # String/memory utilities
-    ├── include/                # Header files
-    ├── linker.ld               # Kernel linker script
-    └── Makefile                # Bare-metal build system
+└── bare-metal/                      # Educational x86 kernel (bonus)
+    ├── boot/ kernel/ drivers/ lib/
+    ├── linker.ld
+    └── Makefile
 ```
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
-│              CursorOS Desktop                    │
-│  ┌──────────┐ ┌──────────┐ ┌──────────────────┐ │
-│  │ Firefox  │ │ Terminal │ │  Ollama / Apps   │ │
-│  │ Browser  │ │  (xfce4) │ │  (installable)   │ │
-│  └──────────┘ └──────────┘ └──────────────────┘ │
-├─────────────────────────────────────────────────┤
-│  XFCE4 Desktop Environment                      │
-│  (Whisker Menu, Taskbar, Window Manager)         │
-├─────────────────────────────────────────────────┤
-│  X.Org Display Server                            │
-│  LightDM (Display Manager, Auto-login)           │
-├─────────────────────────────────────────────────┤
-│  NetworkManager    PulseAudio    systemd         │
-│  (WiFi/Ethernet)   (Audio)      (Services)       │
-├─────────────────────────────────────────────────┤
-│  Linux Kernel (Debian 12 Bookworm)               │
-│  (TCP/IP, Drivers, Filesystems, Security)        │
-├─────────────────────────────────────────────────┤
-│  GRUB2 Bootloader                                │
-│  (BIOS + UEFI support)                           │
-└─────────────────────────────────────────────────┘
-```
-
-## System Requirements
-
-| Minimum | Recommended |
-|---------|-------------|
-| 1 GB RAM | 2+ GB RAM |
-| 1 CPU core | 2+ cores |
-| 5 GB disk (live) | 20+ GB (with apps) |
-| Any x86_64 CPU | Intel/AMD 64-bit |
-
-For Ollama: 4+ GB RAM recommended, 8+ GB for larger models.
-
-## Included Software
-
-| Category | Software |
-|----------|----------|
-| Desktop | XFCE4, Thunar, Mousepad, Ristretto |
-| Browser | Firefox ESR |
-| Terminal | XFCE4 Terminal |
-| Network | NetworkManager, WiFi support |
-| System | htop, neofetch, GParted, GNOME Disks |
-| Dev | git, build-essential, curl, wget |
-| Archive | file-roller, p7zip |
-| Audio | PulseAudio, pavucontrol |
-| AI | Ollama (via installer) |
-| Package Mgr | apt, Synaptic, cursoros-install |
-
-## Bare-Metal Kernel
-
-The original CursorOS bare-metal kernel is preserved in `os/bare-metal/`. It's a from-scratch x86 kernel written in assembly and C with its own VGA driver, keyboard handler, and shell. Build it with:
-
-```bash
-cd os/bare-metal
-make
-qemu-system-i386 -cdrom CursorOS.iso
+┌────────────────────────────────────────────────────────────┐
+│  Applications                                              │
+│  Firefox ─ LibreOffice ─ GIMP ─ VLC ─ Ollama ─ Flatpaks  │
+├────────────────────────────────────────────────────────────┤
+│  Desktop Environment                                       │
+│  XFCE4 ─ Plank Dock ─ Whisker Menu ─ Thunar              │
+├────────────────────────────────────────────────────────────┤
+│  Visual Layer                                              │
+│  Picom (shadows/corners/fade) ─ WhiteSur Theme ─ X.Org   │
+├────────────────────────────────────────────────────────────┤
+│  System Services                                           │
+│  NetworkManager ─ PulseAudio ─ CUPS ─ Bluetooth ─ systemd │
+├────────────────────────────────────────────────────────────┤
+│  Linux Kernel (Debian 12 Bookworm)                         │
+│  TCP/IP ─ WiFi ─ USB ─ GPU ─ FS ─ Security               │
+├────────────────────────────────────────────────────────────┤
+│  GRUB2 + Plymouth Boot Splash                              │
+└────────────────────────────────────────────────────────────┘
 ```
 
 ## License
 
-MIT License - free to use, modify, and distribute.
+MIT License — free to use, modify, and distribute.
 
 ## Credits
 

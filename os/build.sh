@@ -122,7 +122,7 @@ install_packages() {
         linux-image-amd64 linux-headers-amd64 \
         firmware-linux-free firmware-linux-nonfree firmware-misc-nonfree \
         firmware-realtek firmware-iwlwifi firmware-atheros \
-        firmware-intel-sound firmware-sof-signed \
+        firmware-sof-signed \
         intel-microcode amd64-microcode \
         2>/dev/null || log_warn "Some firmware packages unavailable (non-critical)"
 
@@ -138,10 +138,10 @@ install_packages() {
         xfce4 xfce4-goodies \
         xfce4-whiskermenu-plugin xfce4-weather-plugin \
         xfce4-clipman-plugin xfce4-datetime-plugin \
-        xfce4-places-plugin xfce4-statusnotifier-plugin \
+        xfce4-places-plugin \
         xfce4-pulseaudio-plugin xfce4-power-manager \
         lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings \
-        mugshot menulibre
+        menulibre
 
     # ---------- Plank Dock (macOS-like) ----------
     log_info "[3.4] Plank dock..."
@@ -157,8 +157,9 @@ install_packages() {
         adwaita-icon-theme-full \
         fonts-noto fonts-noto-cjk fonts-noto-color-emoji fonts-noto-mono \
         fonts-liberation fonts-dejavu-core fonts-firacode \
-        fonts-roboto fonts-ubuntu fonts-cascadia-code \
-        dmz-cursor-theme
+        fonts-roboto fonts-ubuntu \
+        dmz-cursor-theme \
+        2>/dev/null || log_warn "Some theme/font packages unavailable"
 
     # ---------- Web Browser ----------
     log_info "[3.6] Firefox ESR..."
@@ -179,7 +180,8 @@ install_packages() {
         ristretto \
         shotwell \
         simple-scan \
-        drawing
+        drawing \
+        2>/dev/null || log_warn "Some graphics packages unavailable"
 
     # ---------- Multimedia ----------
     log_info "[3.9] Multimedia (VLC, codecs, audio)..."
@@ -191,8 +193,9 @@ install_packages() {
         pulseaudio pavucontrol alsa-utils \
         gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
         gstreamer1.0-plugins-ugly gstreamer1.0-plugins-bad \
-        gstreamer1.0-libav gstreamer1.0-vaapi \
-        ffmpeg
+        gstreamer1.0-libav \
+        ffmpeg \
+        2>/dev/null || log_warn "Some multimedia packages unavailable"
 
     # ---------- Networking ----------
     log_info "[3.10] Networking (WiFi, Bluetooth, VPN)..."
