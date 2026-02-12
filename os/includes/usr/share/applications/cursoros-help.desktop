@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=CursorOS Help
+Comment=CursorOS quick reference and help
+Exec=xfce4-terminal -e "bash -c 'cursoros-help; read -p \"Press Enter to close...\"'"
+Icon=help-browser
+Terminal=false
+Categories=Utility;Documentation;

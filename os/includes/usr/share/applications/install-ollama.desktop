@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Install Ollama AI
+Comment=Install the Ollama AI platform for running local AI models
+Exec=xfce4-terminal -e "bash -c 'install-ollama; read -p \"Press Enter to close...\"'"
+Icon=applications-science
+Terminal=false
+Categories=Development;Science;
+Keywords=ai;ollama;llm;machine-learning;

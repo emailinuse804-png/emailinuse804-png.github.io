@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Network Manager Applet
+Exec=nm-applet
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Comment=Network Manager System Tray Applet

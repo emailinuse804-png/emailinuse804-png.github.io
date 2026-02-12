@@ -24,5 +24,8 @@ Thumbs.db
 
 # CursorOS build artifacts
 os/build/
-os/CursorOS.iso
+os/build-distro/
+os/bare-metal/build/
+os/CursorOS*.iso
 os/iso/boot/kernel.bin
+os/bare-metal/iso/boot/kernel.bin

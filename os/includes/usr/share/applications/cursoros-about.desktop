@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=About CursorOS
+Comment=Information about CursorOS
+Exec=xfce4-terminal -e "bash -c 'cursoros-about; read -p \"Press Enter to close...\"'"
+Icon=help-about
+Terminal=false
+Categories=Utility;

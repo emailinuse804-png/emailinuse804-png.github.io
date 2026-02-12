@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Software Installer
+Comment=Install software packages
+Exec=xfce4-terminal -e "bash -c 'cursoros-install --popular; echo; read -p \"Enter package to install (or press Enter to exit): \" pkg; if [ -n \"$pkg\" ]; then cursoros-install $pkg; fi; read -p \"Press Enter to close...\"'"
+Icon=system-software-install
+Terminal=false
+Categories=System;PackageManager;
