@@ -1,179 +1,277 @@
 # CursorOS
 
-A minimal, bootable operating system built from scratch in x86 assembly and C. CursorOS boots on real hardware or in a VM, provides an interactive shell with built-in commands, and produces a standard ISO image you can burn to a USB drive or CD.
+A custom Linux distribution built entirely with Cursor AI. CursorOS is a full desktop operating system with a graphical UI, web browser, internet connectivity, and the ability to install software -- including AI tools like Ollama.
 
 ## Features
 
-- **Multiboot-compliant kernel** - boots via GRUB2
-- **Protected mode** with GDT (Global Descriptor Table)
-- **Interrupt handling** with IDT, PIC remapping, ISR/IRQ handlers
-- **VGA text mode driver** (80x25, 16 colors)
-- **PS/2 keyboard driver** with US layout, shift, caps lock, Ctrl shortcuts
-- **PIT timer** at 100 Hz for timekeeping and sleep
-- **Heap memory manager** with `kmalloc`/`kfree` (4MB heap, first-fit allocator)
-- **Interactive shell** with 15+ built-in commands
-- **Bootable ISO image** (~5 MB)
+- **Windows-like Desktop** - XFCE4 with bottom taskbar, start menu, system tray, window snapping
+- **Web Browser** - Firefox ESR pre-installed for full internet browsing
+- **Internet Access** - NetworkManager with WiFi and Ethernet support out of the box
+- **Software Installation** - Install anything via `apt`, `cursoros-install`, or `curl`
+- **Ollama AI Support** - One-command installer for running local AI models (`install-ollama`)
+- **Live Boot** - Runs directly from USB or CD without installing to disk
+- **Dark Theme** - Modern dark UI with custom CursorOS branding
+- **Pre-installed Tools** - Terminal, file manager, text editor, task manager, htop, neofetch, git, and more
 
-## Shell Commands
+## Screenshots
 
-| Command    | Description                         |
-|------------|-------------------------------------|
-| `help`     | Show all available commands         |
-| `clear`    | Clear the screen                    |
-| `echo`     | Print text to the screen            |
-| `version`  | Show OS version and ASCII logo      |
-| `uptime`   | Show system uptime                  |
-| `meminfo`  | Show heap memory usage with bar     |
-| `color`    | Display all 16 VGA color samples    |
-| `history`  | Show command history                |
-| `calc`     | Calculator (`calc 5 + 3`)           |
-| `sysinfo`  | Show detailed system information    |
-| `cowsay`   | ASCII cow says your message         |
-| `matrix`   | Matrix-style rain animation         |
-| `panic`    | Trigger a fake kernel panic (safe)  |
-| `reboot`   | Reboot the system                   |
-| `halt`     | Halt the system                     |
+After booting, you'll see:
+- A GRUB boot menu with CursorOS branding
+- Auto-login to a dark-themed XFCE4 desktop
+- Bottom taskbar with Applications menu (like Windows Start), window list, system tray, clock
+- Desktop icons for Firefox, Terminal, and Files
+- Network applet in the system tray for WiFi/Ethernet
 
-**Keyboard shortcuts:** `Ctrl+L` = clear screen, `Ctrl+C` = cancel input
+## Quick Start
 
-## Building
+### Running the Pre-built ISO
+
+```bash
+# In QEMU (recommended for testing)
+qemu-system-x86_64 -cdrom CursorOS-2.0.0-amd64.iso -m 2G -enable-kvm -smp 2
+
+# In VirtualBox: Create VM > Settings > Storage > Add CursorOS ISO > Boot
+```
+
+### Default Login
+
+- **Username:** `cursor`
+- **Password:** `cursor`
+- Auto-login is enabled (boots straight to desktop)
+- User has passwordless sudo
+
+## Building the ISO
 
 ### Prerequisites
 
-You need a Linux system (or WSL) with these packages:
+A **Debian or Ubuntu** host system with:
+- ~10 GB free disk space
+- Root access (sudo)
+- Internet connection
 
 ```bash
-# Debian/Ubuntu
-sudo apt install nasm gcc grub-pc-bin grub-common xorriso mtools make
-
-# Arch Linux
-sudo pacman -S nasm gcc grub xorriso mtools make
-
-# Fedora
-sudo dnf install nasm gcc grub2-tools xorriso mtools make
+# The build script installs its own dependencies, but you can pre-install:
+sudo apt install debootstrap squashfs-tools xorriso grub-pc-bin grub-efi-amd64-bin mtools
 ```
 
-### Build the ISO
+### Build
 
 ```bash
 cd os
-make
+sudo ./build.sh
 ```
 
-This produces `CursorOS.iso` in the `os/` directory.
+The build takes **20-40 minutes** depending on your internet speed. It will:
+1. Bootstrap a minimal Debian 12 (Bookworm) system
+2. Install XFCE4 desktop, Firefox, NetworkManager, and all utilities
+3. Apply CursorOS branding (wallpaper, theme, login screen, MOTD)
+4. Install custom scripts (Ollama installer, help, package manager)
+5. Create a compressed squashfs filesystem
+6. Generate a bootable ISO with GRUB2
 
-### Clean build artifacts
+Output: `CursorOS-2.0.0-amd64.iso`
+
+### Clean
 
 ```bash
-make clean
+sudo ./build.sh --clean
 ```
 
-## Running
+## Using CursorOS
 
-### In QEMU (recommended for testing)
+### Desktop
+
+The desktop uses a **Windows-like layout**:
+
+| Element | Description |
+|---------|-------------|
+| Bottom panel | Taskbar with app menu, window list, tray, clock |
+| Applications menu | Click "Applications" (bottom-left) or press Super key |
+| Window snapping | Drag to edges, or Super+Arrow keys |
+| Right-click desktop | Desktop menu with options |
+
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Super` (Win key) | Open Applications menu |
+| `Ctrl+Alt+T` | Open Terminal |
+| `Ctrl+Alt+Delete` | Task Manager |
+| `Super+E` | File Manager |
+| `Super+L` | Lock Screen |
+| `Super+D` | Show Desktop |
+| `Super+Left/Right` | Tile window left/right |
+| `Super+Up/Down` | Maximize/Minimize |
+| `Alt+Tab` | Switch windows |
+| `Alt+F4` | Close window |
+| `Alt+F2` | Run command |
+| `Print Screen` | Screenshot |
+
+### Installing Software
 
 ```bash
-# Install QEMU if needed
-sudo apt install qemu-system-x86
+# The friendly way
+cursoros-install firefox     # Install a package
+cursoros-install --search video  # Search packages
+cursoros-install --popular   # Show popular packages
 
-# Run the OS
-make run
-# or directly:
-qemu-system-i386 -cdrom CursorOS.iso -m 128M
+# Or use apt directly
+sudo apt install vlc
+sudo apt install nodejs npm
+sudo apt install docker.io
 ```
 
-### In VirtualBox
+### Installing Ollama (AI)
 
-1. Create a new VM (Type: Other, Version: Other/Unknown)
-2. Allocate at least 64 MB RAM
-3. Skip the hard disk step
-4. Go to Settings > Storage > Add Optical Drive
-5. Choose `CursorOS.iso`
-6. Start the VM
-
-### On Real Hardware
+CursorOS comes with a dedicated Ollama installer:
 
 ```bash
-# Write to a USB drive (replace /dev/sdX with your USB device!)
-sudo dd if=CursorOS.iso of=/dev/sdX bs=4M status=progress
+# Install Ollama
+install-ollama
+
+# Install Ollama + download a starter model
+install-ollama --with-model
+
+# After installation:
+ollama pull llama3.2        # Download Llama 3.2 (2GB)
+ollama pull phi3            # Download Phi-3 (2.3GB)
+ollama pull codellama       # Download Code Llama (3.8GB)
+ollama pull llama3.2:1b     # Tiny 1B model (700MB)
+ollama run llama3.2         # Chat with a model
+```
+
+The Ollama API is available at `http://localhost:11434` for integration with other tools.
+
+### Networking
+
+- **WiFi:** Click the network icon in the system tray, or run `nmtui` in terminal
+- **Ethernet:** Automatically configured via DHCP
+- **Manual config:** `nmcli`, `nmtui`, or NetworkManager GUI applet
+
+### Help
+
+```bash
+cursoros-help     # Quick reference card
+cursoros-about    # About CursorOS
+neofetch          # System info with ASCII art
+```
+
+## Writing to USB
+
+```bash
+# Find your USB device (BE CAREFUL - wrong device = data loss!)
+lsblk
+
+# Write the ISO (replace /dev/sdX with your actual USB device)
+sudo dd if=CursorOS-2.0.0-amd64.iso of=/dev/sdX bs=4M status=progress
 sync
 ```
 
-Then boot from the USB drive in your BIOS/UEFI boot menu (Legacy/CSM boot mode required).
+Boot from USB in your BIOS/UEFI boot menu. Supports both Legacy BIOS and UEFI boot.
 
 ## Project Structure
 
 ```
 os/
-├── boot/
-│   ├── boot.asm          # Multiboot entry point, stack setup
-│   ├── gdt.asm           # GDT load routine
-│   └── interrupt.asm     # ISR/IRQ assembly stubs
-├── kernel/
-│   ├── kernel.c          # Kernel main - initialization sequence
-│   ├── gdt.c             # GDT configuration (flat memory model)
-│   ├── idt.c             # IDT setup, PIC remapping, handler dispatch
-│   ├── memory.c          # Heap allocator (kmalloc/kfree)
-│   └── shell.c           # Interactive shell with commands
-├── drivers/
-│   ├── vga.c             # VGA text mode (80x25) driver
-│   ├── keyboard.c        # PS/2 keyboard driver
-│   └── timer.c           # PIT (Programmable Interval Timer) driver
-├── lib/
-│   └── string.c          # String/memory utilities (strlen, memcpy, etc.)
-├── include/
-│   ├── types.h           # uint8_t, uint32_t, bool, NULL, etc.
-│   ├── io.h              # Port I/O (inb/outb)
-│   ├── vga.h             # VGA driver API
-│   ├── keyboard.h        # Keyboard driver API
-│   ├── gdt.h             # GDT structures
-│   ├── idt.h             # IDT structures + interrupt registers
-│   ├── timer.h           # Timer API
-│   ├── memory.h          # Memory manager API
-│   ├── string.h          # String utilities API
-│   └── shell.h           # Shell API
-├── iso/
-│   └── boot/grub/
-│       └── grub.cfg      # GRUB bootloader configuration
-├── linker.ld             # Kernel linker script (loads at 1MB)
-├── Makefile              # Build system
-└── README.md             # This file
+├── build.sh                    # Main ISO build script
+├── Makefile                    # Build targets (iso, bare-metal, clean)
+├── README.md                   # This file
+│
+├── includes/                   # Files overlaid onto the rootfs
+│   ├── etc/
+│   │   └── skel/               # Default user home directory template
+│   │       ├── .config/
+│   │       │   ├── xfce4/      # XFCE desktop configuration
+│   │       │   │   ├── xfconf/ # Panel, desktop, WM, theme settings
+│   │       │   │   └── panel/  # Whisker menu (Start menu) config
+│   │       │   └── autostart/  # Apps that start with desktop
+│   │       └── Desktop/        # Desktop shortcut icons
+│   └── usr/
+│       └── share/
+│           └── applications/   # .desktop files for app menu
+│
+├── scripts/                    # Custom CursorOS commands
+│   ├── install-ollama.sh       # Ollama AI installer
+│   ├── cursoros-help.sh        # Help quick reference
+│   ├── cursoros-install.sh     # Friendly package installer
+│   └── cursoros-about.sh       # About CursorOS
+│
+└── bare-metal/                 # Original bare-metal x86 kernel
+    ├── boot/                   # Assembly bootloader
+    ├── kernel/                 # C kernel (shell, GDT, IDT, memory)
+    ├── drivers/                # VGA, keyboard, timer drivers
+    ├── lib/                    # String/memory utilities
+    ├── include/                # Header files
+    ├── linker.ld               # Kernel linker script
+    └── Makefile                # Bare-metal build system
 ```
 
 ## Architecture
 
 ```
-┌─────────────┐
-│    Shell     │  User-facing interactive command line
-├─────────────┤
-│   Keyboard  │  PS/2 keyboard driver (IRQ1)
-│    Timer    │  PIT timer driver (IRQ0)
-│     VGA     │  Text mode display driver
-├─────────────┤
-│   Memory    │  Heap allocator (kmalloc/kfree)
-│   String    │  Standard library functions
-├─────────────┤
-│  IDT + PIC  │  Interrupt handling infrastructure
-│     GDT     │  Memory segmentation (flat model)
-├─────────────┤
-│  Bootloader │  Multiboot entry + stack setup
-├─────────────┤
-│    GRUB2    │  Bootloader (loads kernel from ISO)
-└─────────────┘
+┌─────────────────────────────────────────────────┐
+│              CursorOS Desktop                    │
+│  ┌──────────┐ ┌──────────┐ ┌──────────────────┐ │
+│  │ Firefox  │ │ Terminal │ │  Ollama / Apps   │ │
+│  │ Browser  │ │  (xfce4) │ │  (installable)   │ │
+│  └──────────┘ └──────────┘ └──────────────────┘ │
+├─────────────────────────────────────────────────┤
+│  XFCE4 Desktop Environment                      │
+│  (Whisker Menu, Taskbar, Window Manager)         │
+├─────────────────────────────────────────────────┤
+│  X.Org Display Server                            │
+│  LightDM (Display Manager, Auto-login)           │
+├─────────────────────────────────────────────────┤
+│  NetworkManager    PulseAudio    systemd         │
+│  (WiFi/Ethernet)   (Audio)      (Services)       │
+├─────────────────────────────────────────────────┤
+│  Linux Kernel (Debian 12 Bookworm)               │
+│  (TCP/IP, Drivers, Filesystems, Security)        │
+├─────────────────────────────────────────────────┤
+│  GRUB2 Bootloader                                │
+│  (BIOS + UEFI support)                           │
+└─────────────────────────────────────────────────┘
 ```
 
-## Technical Details
+## System Requirements
 
-- **Boot process:** BIOS -> GRUB2 -> Multiboot header -> `boot.asm` -> `kernel_main()`
-- **Memory model:** Flat 4GB segments (code + data) via GDT
-- **Interrupts:** 8259 PIC remapped to INT 32-47, 32 CPU exception handlers
-- **Display:** Direct VGA text buffer writes at `0xB8000`
-- **Input:** Scan code translation with shift/caps lock/ctrl support
-- **Heap:** Starts at 2MB, 4MB size, first-fit with block coalescing
+| Minimum | Recommended |
+|---------|-------------|
+| 1 GB RAM | 2+ GB RAM |
+| 1 CPU core | 2+ cores |
+| 5 GB disk (live) | 20+ GB (with apps) |
+| Any x86_64 CPU | Intel/AMD 64-bit |
+
+For Ollama: 4+ GB RAM recommended, 8+ GB for larger models.
+
+## Included Software
+
+| Category | Software |
+|----------|----------|
+| Desktop | XFCE4, Thunar, Mousepad, Ristretto |
+| Browser | Firefox ESR |
+| Terminal | XFCE4 Terminal |
+| Network | NetworkManager, WiFi support |
+| System | htop, neofetch, GParted, GNOME Disks |
+| Dev | git, build-essential, curl, wget |
+| Archive | file-roller, p7zip |
+| Audio | PulseAudio, pavucontrol |
+| AI | Ollama (via installer) |
+| Package Mgr | apt, Synaptic, cursoros-install |
+
+## Bare-Metal Kernel
+
+The original CursorOS bare-metal kernel is preserved in `os/bare-metal/`. It's a from-scratch x86 kernel written in assembly and C with its own VGA driver, keyboard handler, and shell. Build it with:
+
+```bash
+cd os/bare-metal
+make
+qemu-system-i386 -cdrom CursorOS.iso
+```
 
 ## License
 
-MIT License - feel free to use, modify, and learn from this code.
+MIT License - free to use, modify, and distribute.
 
 ## Credits
 
