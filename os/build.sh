@@ -275,6 +275,22 @@ install_packages() {
     chroot "${ROOTFS_DIR}" apt-get install -y -qq \
         live-boot live-config live-config-systemd rsync
 
+    # ---------- CRITICAL: Rebuild initramfs with live-boot hooks ----------
+    log_info "[3.17] Rebuilding initramfs (includes live-boot hooks)..."
+    chroot "${ROOTFS_DIR}" update-initramfs -u -k all
+    # Verify live-boot is in the initramfs
+    chroot "${ROOTFS_DIR}" bash -c '
+        INITRD=$(ls /boot/initrd.img-* 2>/dev/null | sort -V | tail -1)
+        if [ -n "$INITRD" ]; then
+            if lsinitramfs "$INITRD" 2>/dev/null | grep -q "live"; then
+                echo "VERIFIED: live-boot hooks present in initramfs"
+            else
+                echo "WARNING: live-boot hooks NOT found, forcing rebuild..."
+                update-initramfs -c -k all
+            fi
+        fi
+    '
+
     # ---------- Cleanup ----------
     log_info "Cleaning apt cache..."
     chroot "${ROOTFS_DIR}" apt-get clean
@@ -670,8 +686,7 @@ build_iso() {
     log_info "Compressing filesystem (this takes several minutes)..."
     rm -f "${ISO_DIR}/live/filesystem.squashfs"
     mksquashfs "${ROOTFS_DIR}" "${ISO_DIR}/live/filesystem.squashfs" \
-        -comp xz -Xbcj x86 -b 1M -no-duplicates -no-recovery \
-        -e boot/vmlinuz* -e boot/initrd*
+        -comp xz -Xbcj x86 -b 1M -no-duplicates -no-recovery
 
     # Kernel + initrd
     log_info "Copying kernel..."
@@ -699,29 +714,41 @@ set menu_color_normal=light-gray/black
 set menu_color_highlight=white/dark-gray
 
 menuentry "  CursorOS 3.0 — Start Desktop" --class cursoros --class os {
-    linux /boot/vmlinuz boot=live toram quiet splash loglevel=3 \
+    linux /boot/vmlinuz boot=live quiet splash loglevel=3 \
+        live-media-path=/live \
         username=cursor hostname=cursoros \
         locales=en_US.UTF-8 keyboard-layouts=us timezone=UTC
     initrd /boot/initrd.img
 }
 
-menuentry "  CursorOS 3.0 — Safe Mode (no effects)" --class cursoros {
-    linux /boot/vmlinuz boot=live toram \
+menuentry "  CursorOS 3.0 — Start Desktop (verbose)" --class cursoros {
+    linux /boot/vmlinuz boot=live \
+        live-media-path=/live \
         username=cursor hostname=cursoros \
-        locales=en_US.UTF-8 keyboard-layouts=us timezone=UTC \
-        nomodeset plymouth.enable=0
+        locales=en_US.UTF-8 keyboard-layouts=us timezone=UTC
     initrd /boot/initrd.img
 }
 
-menuentry "  CursorOS 3.0 — Load to RAM (fast, needs 4GB+)" --class cursoros {
-    linux /boot/vmlinuz boot=live toram=filesystem.squashfs quiet splash \
+menuentry "  CursorOS 3.0 — Safe Mode (no GPU driver)" --class cursoros {
+    linux /boot/vmlinuz boot=live \
+        live-media-path=/live nomodeset \
+        username=cursor hostname=cursoros \
+        locales=en_US.UTF-8 keyboard-layouts=us timezone=UTC \
+        plymouth.enable=0
+    initrd /boot/initrd.img
+}
+
+menuentry "  CursorOS 3.0 — Load to RAM (needs 6GB+)" --class cursoros {
+    linux /boot/vmlinuz boot=live toram quiet splash \
+        live-media-path=/live \
         username=cursor hostname=cursoros \
         locales=en_US.UTF-8 keyboard-layouts=us timezone=UTC
     initrd /boot/initrd.img
 }
 
 menuentry "  CursorOS 3.0 — Console Only" --class cursoros {
-    linux /boot/vmlinuz boot=live toram \
+    linux /boot/vmlinuz boot=live \
+        live-media-path=/live \
         username=cursor hostname=cursoros \
         locales=en_US.UTF-8 keyboard-layouts=us timezone=UTC \
         systemd.unit=multi-user.target
