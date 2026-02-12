@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Night Light
+Exec=redshift-gtk
+Hidden=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+Comment=Reduce blue light at night (like Night Shift)

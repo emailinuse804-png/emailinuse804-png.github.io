@@ -1,0 +1,31 @@
+[PlankDockPreferences]
+#Whether to show only windows of the current workspace.
+CurrentWorkspaceOnly=false
+#The size of dock icons (in pixels).
+IconSize=52
+#Hide the dock when not in use.
+HideMode=3
+#Auto-hide delay (ms).
+HideDelay=300
+#Un-hide delay (ms).
+UnhideDelay=200
+#The monitor on which to show the dock (-1 for primary).
+Monitor=-1
+#List of *.dockitem files on this dock.
+DockItems=firefox-esr.dockitem;;thunar.dockitem;;xfce4-terminal.dockitem;;libreoffice-writer.dockitem;;org.gimp.GIMP.dockitem;;vlc.dockitem;;xfce4-settings-manager.dockitem;;gnome-software.dockitem
+#The position for the dock on the monitor.
+Position=3
+#The dock's position offset from center (in percent).
+Offset=0
+#The dock alignment (0=panel, 1=left, 2=right, 3=center, 4=fill).
+Alignment=3
+#The name of the dock's theme.
+Theme=Transparent
+#Whether to prevent drag'n'drop actions and lock items on the dock.
+LockItems=false
+#Whether to use pressure-based revealing.
+PressureReveal=false
+#Whether to zoom icons when hovered.
+ZoomEnabled=true
+#Zoom percentage (1.0 = 100%).
+ZoomPercent=150

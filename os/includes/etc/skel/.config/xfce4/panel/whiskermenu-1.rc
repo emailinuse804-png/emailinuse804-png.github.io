@@ -1,32 +1,32 @@
-# CursorOS - Whisker Menu Configuration
-# Windows-like Start Menu behavior
+# CursorOS v3 - Whisker Menu (App Launcher / macOS Spotlight-like)
 
-favorites=firefox-esr.desktop,xfce4-terminal.desktop,thunar.desktop,mousepad.desktop,install-ollama.desktop,xfce4-taskmanager.desktop
+favorites=firefox-esr.desktop,xfce4-terminal.desktop,thunar.desktop,libreoffice-writer.desktop,gimp.desktop,vlc.desktop,gnome-calculator.desktop,xfce4-settings-manager.desktop,xfce4-taskmanager.desktop,install-ollama.desktop
 recent=
-button-title=Applications
+button-title=
 button-icon=start-here
 button-single-row=false
-show-button-title=true
+show-button-title=false
 show-button-icon=true
 launcher-show-name=true
 launcher-show-description=true
 launcher-show-tooltip=true
-item-icon-size=2
+item-icon-size=3
 hover-switch-category=true
 category-show-name=true
-category-icon-size=1
+category-icon-size=2
 sort-categories=false
 view-mode=0
 default-category=0
-recent-items-max=10
+recent-items-max=15
 favorites-in-recent=true
 position-search-alternate=true
 position-commands-alternate=false
 position-categories-alternate=true
 stay-on-focus-out=false
 confirm-session-command=true
-menu-width=450
-menu-height=500
+menu-width=500
+menu-height=580
+menu-opacity=95
 command-settings=xfce4-settings-manager
 show-command-settings=true
 command-lockscreen=xflock4
@@ -48,5 +48,5 @@ show-command-logout=true
 command-menueditor=menulibre
 show-command-menueditor=true
 command-profile=mugshot
-show-command-profile=false
+show-command-profile=true
 search-actions=5

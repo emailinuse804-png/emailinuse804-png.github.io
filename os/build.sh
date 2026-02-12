@@ -1,17 +1,13 @@
 #!/bin/bash
 # ============================================================================
-# CursorOS - Linux Distribution Build Script
+# CursorOS v3.0 "Horizon" - Premium Desktop ISO Builder
 # ============================================================================
-# Builds a bootable CursorOS ISO image based on Debian with:
-#   - XFCE4 desktop environment (Windows-like layout)
-#   - Firefox ESR web browser
-#   - Full networking (Ethernet + WiFi)
-#   - Software installation support (apt + curl + Ollama installer)
-#   - Custom CursorOS branding throughout
+# Builds a ~6GB bootable ISO comparable to macOS / Windows in features and
+# polish. Includes a full graphical desktop with macOS-inspired theming,
+# a web browser, office suite, media players, image editor, an app store,
+# printing, Bluetooth, and Ollama AI support.
 #
-# Usage: sudo ./build.sh [--clean] [--minimal]
-#
-# Requirements: Debian/Ubuntu host with ~10GB free disk space
+# Usage: sudo ./build.sh [--clean] [--skip-themes]
 # ============================================================================
 
 set -e
@@ -20,9 +16,9 @@ set -e
 # Configuration
 # ============================================================================
 OS_NAME="CursorOS"
-OS_VERSION="2.0.0"
-OS_CODENAME="Aurora"
-DEBIAN_SUITE="bookworm"  # Debian 12
+OS_VERSION="3.0.0"
+OS_CODENAME="Horizon"
+DEBIAN_SUITE="bookworm"
 ARCH="amd64"
 BUILD_DIR="$(pwd)/build-distro"
 ROOTFS_DIR="${BUILD_DIR}/rootfs"
@@ -30,20 +26,13 @@ ISO_DIR="${BUILD_DIR}/iso"
 OUTPUT_ISO="${OS_NAME}-${OS_VERSION}-${ARCH}.iso"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m'
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
+CYAN='\033[0;36m'; MAGENTA='\033[0;35m'; WHITE='\033[1;37m'; NC='\033[0m'
 
-# ============================================================================
-# Helper Functions
-# ============================================================================
 log_info()    { echo -e "${GREEN}[INFO]${NC} $1"; }
 log_warn()    { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_error()   { echo -e "${RED}[ERROR]${NC} $1"; }
-log_section() { echo -e "\n${CYAN}========== $1 ==========${NC}\n"; }
+log_section() { echo -e "\n${CYAN}══════════ $1 ══════════${NC}\n"; }
 
 check_root() {
     if [ "$(id -u)" -ne 0 ]; then
@@ -60,259 +49,305 @@ cleanup() {
     umount -lf "${ROOTFS_DIR}/dev" 2>/dev/null || true
     umount -lf "${ROOTFS_DIR}/run" 2>/dev/null || true
 }
-
 trap cleanup EXIT
 
 # ============================================================================
-# Phase 0: Prerequisites
+# Phase 0: Build Dependencies
 # ============================================================================
 install_build_deps() {
-    log_section "Installing Build Dependencies"
+    log_section "Phase 0: Build Dependencies"
     apt-get update -qq
     apt-get install -y -qq \
-        debootstrap \
-        squashfs-tools \
-        xorriso \
-        grub-pc-bin \
-        grub-efi-amd64-bin \
-        grub-common \
-        mtools \
-        dosfstools \
-        isolinux \
-        syslinux-utils \
-        wget \
-        curl \
-        rsync
+        debootstrap squashfs-tools xorriso grub-pc-bin grub-efi-amd64-bin \
+        grub-common mtools dosfstools isolinux syslinux-utils \
+        wget curl rsync git
     log_info "Build dependencies installed."
 }
 
 # ============================================================================
-# Phase 1: Bootstrap Base System
+# Phase 1: Bootstrap
 # ============================================================================
 bootstrap_rootfs() {
-    log_section "Bootstrapping Debian ${DEBIAN_SUITE} Root Filesystem"
-
-    if [ -d "${ROOTFS_DIR}" ]; then
-        log_warn "Existing rootfs found, removing..."
-        cleanup
-        rm -rf "${ROOTFS_DIR}"
-    fi
-
+    log_section "Phase 1: Bootstrap Debian ${DEBIAN_SUITE}"
+    [ -d "${ROOTFS_DIR}" ] && { cleanup; rm -rf "${ROOTFS_DIR}"; }
     mkdir -p "${ROOTFS_DIR}"
-
-    debootstrap \
-        --arch="${ARCH}" \
-        --variant=minbase \
-        --include=apt,apt-utils,locales,sudo,systemd,systemd-sysv,dbus \
-        "${DEBIAN_SUITE}" \
-        "${ROOTFS_DIR}" \
-        http://deb.debian.org/debian
-
+    debootstrap --arch="${ARCH}" --variant=minbase \
+        --include=apt,apt-utils,locales,sudo,systemd,systemd-sysv,dbus,ca-certificates,gnupg \
+        "${DEBIAN_SUITE}" "${ROOTFS_DIR}" http://deb.debian.org/debian
     log_info "Base system bootstrapped."
 }
 
 # ============================================================================
-# Phase 2: Configure Base System
+# Phase 2: Configure Base
 # ============================================================================
 configure_base() {
-    log_section "Configuring Base System"
-
-    # Mount virtual filesystems for chroot
-    mount --bind /dev  "${ROOTFS_DIR}/dev"
+    log_section "Phase 2: Configure Base System"
+    mount --bind /dev "${ROOTFS_DIR}/dev"
     mount --bind /dev/pts "${ROOTFS_DIR}/dev/pts"
     mount -t proc proc "${ROOTFS_DIR}/proc"
     mount -t sysfs sys "${ROOTFS_DIR}/sys"
     mount -t tmpfs tmpfs "${ROOTFS_DIR}/run"
 
-    # Configure apt sources
     cat > "${ROOTFS_DIR}/etc/apt/sources.list" <<EOF
 deb http://deb.debian.org/debian ${DEBIAN_SUITE} main contrib non-free non-free-firmware
 deb http://deb.debian.org/debian ${DEBIAN_SUITE}-updates main contrib non-free non-free-firmware
 deb http://security.debian.org/debian-security ${DEBIAN_SUITE}-security main contrib non-free non-free-firmware
 EOF
 
-    # Set hostname
     echo "cursoros" > "${ROOTFS_DIR}/etc/hostname"
     cat > "${ROOTFS_DIR}/etc/hosts" <<EOF
-127.0.0.1   localhost
-127.0.1.1   cursoros
+127.0.0.1   localhost cursoros
 ::1         localhost ip6-localhost ip6-loopback
 EOF
 
-    # Configure locale
     chroot "${ROOTFS_DIR}" bash -c "
         echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen
         locale-gen
         update-locale LANG=en_US.UTF-8
-    "
-
-    # Set timezone
-    chroot "${ROOTFS_DIR}" bash -c "
         ln -sf /usr/share/zoneinfo/UTC /etc/localtime
-        echo 'UTC' > /etc/timezone
     "
-
-    log_info "Base system configured."
+    log_info "Base configured."
 }
 
 # ============================================================================
-# Phase 3: Install Packages
+# Phase 3: Install ALL Packages
 # ============================================================================
 install_packages() {
-    log_section "Installing Desktop & Application Packages"
-
-    # Update package lists in chroot
+    log_section "Phase 3: Install Software (this is the big one)"
     chroot "${ROOTFS_DIR}" apt-get update -qq
 
-    # --- Linux Kernel ---
-    log_info "Installing Linux kernel..."
+    # ---------- Linux Kernel + Firmware ----------
+    log_info "[3.1] Linux kernel + firmware..."
     chroot "${ROOTFS_DIR}" apt-get install -y -qq \
-        linux-image-amd64 \
-        linux-headers-amd64 \
-        firmware-linux-free
+        linux-image-amd64 linux-headers-amd64 \
+        firmware-linux-free firmware-linux-nonfree firmware-misc-nonfree \
+        firmware-realtek firmware-iwlwifi firmware-atheros \
+        firmware-intel-sound firmware-sof-signed \
+        intel-microcode amd64-microcode \
+        2>/dev/null || log_warn "Some firmware packages unavailable (non-critical)"
 
-    # --- XFCE4 Desktop Environment ---
-    log_info "Installing XFCE4 desktop..."
+    # ---------- Display Server + Compositor ----------
+    log_info "[3.2] X.Org + compositor..."
     chroot "${ROOTFS_DIR}" apt-get install -y -qq \
-        xfce4 \
-        xfce4-terminal \
-        xfce4-whiskermenu-plugin \
-        xfce4-taskmanager \
-        xfce4-screenshooter \
-        xfce4-power-manager \
-        xfce4-notifyd \
-        xfce4-pulseaudio-plugin \
-        xfce4-clipman-plugin \
-        thunar-archive-plugin \
-        file-roller \
-        mousepad \
-        ristretto
+        xorg xserver-xorg xserver-xorg-video-all xserver-xorg-input-all \
+        picom
 
-    # --- Display Manager ---
-    log_info "Installing display manager..."
-    chroot "${ROOTFS_DIR}" bash -c "
-        DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
-            lightdm \
-            lightdm-gtk-greeter \
-            lightdm-gtk-greeter-settings
-    "
-
-    # --- X.Org Display Server ---
-    log_info "Installing display server..."
+    # ---------- XFCE4 Desktop Environment ----------
+    log_info "[3.3] XFCE4 desktop environment..."
     chroot "${ROOTFS_DIR}" apt-get install -y -qq \
-        xorg \
-        xserver-xorg \
-        xserver-xorg-video-all \
-        xserver-xorg-input-all
+        xfce4 xfce4-goodies \
+        xfce4-whiskermenu-plugin xfce4-weather-plugin \
+        xfce4-clipman-plugin xfce4-datetime-plugin \
+        xfce4-places-plugin xfce4-statusnotifier-plugin \
+        xfce4-pulseaudio-plugin xfce4-power-manager \
+        lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings \
+        mugshot menulibre
 
-    # --- Web Browser ---
-    log_info "Installing Firefox ESR..."
-    chroot "${ROOTFS_DIR}" apt-get install -y -qq \
-        firefox-esr
+    # ---------- Plank Dock (macOS-like) ----------
+    log_info "[3.4] Plank dock..."
+    chroot "${ROOTFS_DIR}" apt-get install -y -qq plank
 
-    # --- Networking ---
-    log_info "Installing networking..."
+    # ---------- Themes + Icons (Premium Look) ----------
+    log_info "[3.5] Premium themes and icons..."
     chroot "${ROOTFS_DIR}" apt-get install -y -qq \
-        network-manager \
-        network-manager-gnome \
-        wpasupplicant \
-        wireless-tools \
-        rfkill \
-        iw \
-        iputils-ping \
-        net-tools \
-        wget \
-        curl \
-        ca-certificates \
-        gnupg
+        papirus-icon-theme \
+        arc-theme \
+        breeze-cursor-theme \
+        gtk2-engines-murrine gtk2-engines-pixbuf \
+        adwaita-icon-theme-full \
+        fonts-noto fonts-noto-cjk fonts-noto-color-emoji fonts-noto-mono \
+        fonts-liberation fonts-dejavu-core fonts-firacode \
+        fonts-roboto fonts-ubuntu fonts-cascadia-code \
+        dmz-cursor-theme
 
-    # --- Audio ---
-    log_info "Installing audio..."
-    chroot "${ROOTFS_DIR}" apt-get install -y -qq \
-        pulseaudio \
-        pavucontrol \
-        alsa-utils
+    # ---------- Web Browser ----------
+    log_info "[3.6] Firefox ESR..."
+    chroot "${ROOTFS_DIR}" apt-get install -y -qq firefox-esr
 
-    # --- System Utilities ---
-    log_info "Installing system utilities..."
+    # ---------- Office Suite ----------
+    log_info "[3.7] LibreOffice suite..."
     chroot "${ROOTFS_DIR}" apt-get install -y -qq \
-        bash-completion \
-        htop \
-        neofetch \
-        nano \
-        vim-tiny \
-        git \
-        unzip \
-        zip \
-        p7zip-full \
-        gparted \
-        gnome-disk-utility \
+        libreoffice-calc libreoffice-writer libreoffice-impress \
+        libreoffice-draw libreoffice-math \
+        libreoffice-gtk3 libreoffice-gnome
+
+    # ---------- Graphics / Image Editing ----------
+    log_info "[3.8] Graphics software..."
+    chroot "${ROOTFS_DIR}" apt-get install -y -qq \
+        gimp gimp-data-extras \
+        inkscape \
+        ristretto \
+        shotwell \
+        simple-scan \
+        drawing
+
+    # ---------- Multimedia ----------
+    log_info "[3.9] Multimedia (VLC, codecs, audio)..."
+    chroot "${ROOTFS_DIR}" apt-get install -y -qq \
+        vlc vlc-plugin-base \
+        parole \
+        celluloid \
+        cheese \
+        pulseaudio pavucontrol alsa-utils \
+        gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+        gstreamer1.0-plugins-ugly gstreamer1.0-plugins-bad \
+        gstreamer1.0-libav gstreamer1.0-vaapi \
+        ffmpeg
+
+    # ---------- Networking ----------
+    log_info "[3.10] Networking (WiFi, Bluetooth, VPN)..."
+    chroot "${ROOTFS_DIR}" apt-get install -y -qq \
+        network-manager network-manager-gnome network-manager-openvpn \
+        network-manager-openvpn-gnome \
+        wpasupplicant wireless-tools rfkill iw \
+        bluez bluez-tools blueman \
+        iputils-ping net-tools traceroute dnsutils whois nmap \
+        wget curl ca-certificates openssh-client \
+        transmission-gtk
+
+    # ---------- Printing ----------
+    log_info "[3.11] Printing support (CUPS)..."
+    chroot "${ROOTFS_DIR}" apt-get install -y -qq \
+        cups cups-browsed cups-bsd cups-client cups-filters \
+        system-config-printer printer-driver-all \
+        hplip \
+        2>/dev/null || log_warn "Some printer drivers unavailable"
+
+    # ---------- System Utilities ----------
+    log_info "[3.12] System utilities..."
+    chroot "${ROOTFS_DIR}" apt-get install -y -qq \
+        bash-completion htop btop neofetch \
+        nano vim-tiny micro \
+        git git-gui gitk \
+        unzip zip p7zip-full xarchiver \
+        gparted gnome-disk-utility baobab \
         synaptic \
-        software-properties-common \
-        apt-transport-https \
-        lsb-release \
-        policykit-1 \
-        gvfs \
-        gvfs-backends \
-        udisks2 \
-        upower \
-        acpi \
-        dkms \
-        build-essential
+        software-properties-common apt-transport-https \
+        lsb-release policykit-1 \
+        gvfs gvfs-backends gvfs-fuse \
+        udisks2 upower acpi acpid \
+        dkms build-essential \
+        gnome-calculator \
+        gnome-calendar \
+        gnome-clocks \
+        evince \
+        catfish \
+        xdg-utils xdg-user-dirs xdg-user-dirs-gtk \
+        gnome-keyring seahorse \
+        timeshift \
+        redshift redshift-gtk \
+        flameshot \
+        numlockx \
+        xclip xsel \
+        inxi lshw hwinfo pciutils usbutils \
+        dconf-cli dconf-editor \
+        flatpak \
+        at-spi2-core \
+        file \
+        man-db \
+        less
 
-    # --- Fonts ---
-    log_info "Installing fonts..."
+    # ---------- App Store (GNOME Software + Flatpak) ----------
+    log_info "[3.13] App store (GNOME Software)..."
     chroot "${ROOTFS_DIR}" apt-get install -y -qq \
-        fonts-liberation \
-        fonts-noto \
-        fonts-noto-color-emoji \
-        fonts-dejavu-core
+        gnome-software gnome-software-plugin-flatpak \
+        2>/dev/null || log_warn "GNOME Software install issue (non-critical)"
 
-    # --- Live System Tools ---
-    log_info "Installing live system tools..."
+    # ---------- Development Tools ----------
+    log_info "[3.14] Development tools..."
     chroot "${ROOTFS_DIR}" apt-get install -y -qq \
-        live-boot \
-        live-config \
-        live-config-systemd \
-        rsync
+        python3 python3-pip python3-venv python3-dev \
+        gcc g++ make cmake \
+        nodejs npm \
+        default-jdk-headless \
+        2>/dev/null || log_warn "Some dev packages unavailable"
 
-    # --- Firmware (for real hardware) ---
-    log_info "Installing firmware packages..."
+    # ---------- Plymouth Boot Splash ----------
+    log_info "[3.15] Plymouth boot splash..."
     chroot "${ROOTFS_DIR}" apt-get install -y -qq \
-        firmware-linux-nonfree \
-        firmware-misc-nonfree \
-        firmware-realtek \
-        firmware-iwlwifi \
-        firmware-atheros \
-        2>/dev/null || log_warn "Some firmware packages not available (non-critical)"
+        plymouth plymouth-themes
 
-    # --- Clean up ---
+    # ---------- Live System ----------
+    log_info "[3.16] Live boot support..."
+    chroot "${ROOTFS_DIR}" apt-get install -y -qq \
+        live-boot live-config live-config-systemd rsync
+
+    # ---------- Cleanup ----------
+    log_info "Cleaning apt cache..."
     chroot "${ROOTFS_DIR}" apt-get clean
     chroot "${ROOTFS_DIR}" rm -rf /var/lib/apt/lists/*
-
     log_info "All packages installed."
 }
 
 # ============================================================================
-# Phase 4: Create User & Configure System
+# Phase 4: Install Premium Theme (WhiteSur - macOS-inspired)
+# ============================================================================
+install_premium_theme() {
+    log_section "Phase 4: Install Premium macOS-inspired Theme"
+
+    chroot "${ROOTFS_DIR}" bash -c '
+        set -e
+        cd /tmp
+
+        # --- WhiteSur GTK Theme (macOS Big Sur inspired) ---
+        echo "Downloading WhiteSur GTK theme..."
+        git clone --depth=1 https://github.com/vinceliuice/WhiteSur-gtk-theme.git 2>/dev/null || true
+        if [ -d WhiteSur-gtk-theme ]; then
+            cd WhiteSur-gtk-theme
+            bash install.sh -c Dark -t default -l --tweaks solid -d /usr/share/themes 2>/dev/null || \
+            bash install.sh -d /usr/share/themes 2>/dev/null || true
+            cd /tmp
+            rm -rf WhiteSur-gtk-theme
+            echo "WhiteSur GTK theme installed."
+        fi
+
+        # --- WhiteSur Icon Theme ---
+        echo "Downloading WhiteSur icon theme..."
+        git clone --depth=1 https://github.com/vinceliuice/WhiteSur-icon-theme.git 2>/dev/null || true
+        if [ -d WhiteSur-icon-theme ]; then
+            cd WhiteSur-icon-theme
+            bash install.sh -d /usr/share/icons 2>/dev/null || true
+            cd /tmp
+            rm -rf WhiteSur-icon-theme
+            echo "WhiteSur icon theme installed."
+        fi
+
+        # --- WhiteSur Cursor Theme ---
+        echo "Downloading WhiteSur cursor theme..."
+        git clone --depth=1 https://github.com/vinceliuice/WhiteSur-cursors.git 2>/dev/null || true
+        if [ -d WhiteSur-cursors ]; then
+            cd WhiteSur-cursors
+            bash install.sh 2>/dev/null || {
+                mkdir -p /usr/share/icons/WhiteSur-cursors
+                cp -r dist/* /usr/share/icons/WhiteSur-cursors/ 2>/dev/null || true
+            }
+            cd /tmp
+            rm -rf WhiteSur-cursors
+            echo "WhiteSur cursor theme installed."
+        fi
+
+        # Clean git cache
+        rm -rf /tmp/.git* 2>/dev/null || true
+    '
+    log_info "Premium themes installed."
+}
+
+# ============================================================================
+# Phase 5: Users + Auto-login
 # ============================================================================
 configure_users() {
-    log_section "Configuring Users"
-
-    # Create the default user
+    log_section "Phase 5: Configure Users"
     chroot "${ROOTFS_DIR}" bash -c "
-        useradd -m -s /bin/bash -G sudo,audio,video,plugdev,netdev,bluetooth,cdrom cursor 2>/dev/null || true
+        useradd -m -s /bin/bash -G sudo,audio,video,plugdev,netdev,bluetooth,cdrom,lpadmin,scanner cursor 2>/dev/null || true
         echo 'cursor:cursor' | chpasswd
         echo 'root:root' | chpasswd
     "
 
-    # Passwordless sudo for cursor user
     cat > "${ROOTFS_DIR}/etc/sudoers.d/cursor" <<EOF
 cursor ALL=(ALL) NOPASSWD: ALL
 EOF
     chmod 440 "${ROOTFS_DIR}/etc/sudoers.d/cursor"
 
-    # Auto-login configuration for LightDM
     mkdir -p "${ROOTFS_DIR}/etc/lightdm"
     cat > "${ROOTFS_DIR}/etc/lightdm/lightdm.conf" <<EOF
 [Seat:*]
@@ -323,51 +358,75 @@ greeter-session=lightdm-gtk-greeter
 greeter-hide-users=false
 EOF
 
-    log_info "Users configured (user: cursor, password: cursor)."
+    # Create XDG user directories
+    chroot "${ROOTFS_DIR}" bash -c "
+        su - cursor -c 'xdg-user-dirs-update' 2>/dev/null || true
+    "
+
+    log_info "Users configured."
 }
 
 # ============================================================================
-# Phase 5: Apply CursorOS Branding
+# Phase 6: Apply CursorOS Branding & Configuration
 # ============================================================================
 apply_branding() {
-    log_section "Applying CursorOS Branding"
+    log_section "Phase 6: Apply CursorOS Branding"
 
-    # --- Copy all customization files ---
+    # --- Copy all overlay files ---
     if [ -d "${SCRIPT_DIR}/includes" ]; then
-        log_info "Copying customization files..."
         rsync -a "${SCRIPT_DIR}/includes/" "${ROOTFS_DIR}/"
     fi
 
-    # --- Generate Wallpaper ---
-    log_info "Generating CursorOS wallpaper..."
+    # --- Copy to actual user home (not just skel) ---
+    rsync -a "${ROOTFS_DIR}/etc/skel/" "${ROOTFS_DIR}/home/cursor/"
+
+    # --- Generate Premium Wallpaper ---
+    log_info "Generating CursorOS wallpapers..."
     chroot "${ROOTFS_DIR}" bash -c "
         apt-get update -qq && apt-get install -y -qq imagemagick 2>/dev/null || true
         if command -v convert &>/dev/null; then
-            convert -size 1920x1080 \
-                -define gradient:angle=135 \
-                gradient:'#0a0a2e'-'#1a1a4e' \
-                -fill '#00d4ff' -font DejaVu-Sans-Bold -pointsize 72 \
-                -gravity center -annotate +0-100 'CursorOS' \
-                -fill '#8892b0' -font DejaVu-Sans -pointsize 24 \
-                -gravity center -annotate +0-20 'v${OS_VERSION} \"${OS_CODENAME}\"' \
-                -fill '#00d4ff33' -font DejaVu-Sans -pointsize 14 \
-                -gravity south -annotate +0+40 'Built with Cursor AI' \
-                /usr/share/backgrounds/cursoros-wallpaper.png 2>/dev/null && \
-                echo 'Wallpaper generated.' || echo 'Wallpaper generation failed, using fallback.'
+            mkdir -p /usr/share/backgrounds
 
-            # Also generate a simple fallback if the fancy one failed
-            if [ ! -f /usr/share/backgrounds/cursoros-wallpaper.png ]; then
-                convert -size 1920x1080 xc:'#0a0a2e' \
-                    -fill '#00d4ff' -pointsize 72 \
-                    -gravity center -annotate +0+0 'CursorOS' \
-                    /usr/share/backgrounds/cursoros-wallpaper.png 2>/dev/null || true
-            fi
+            # --- Main wallpaper: deep gradient with subtle branding ---
+            convert -size 3840x2160 \\
+                \( -size 3840x2160 gradient:'#0d1117'-'#161b22' -rotate 135 \) \\
+                \( -size 3840x2160 xc:none \\
+                   -fill 'rgba(0,212,255,0.03)' \\
+                   -draw 'circle 1920,800 1920,1600' \\
+                   -fill 'rgba(139,92,246,0.03)' \\
+                   -draw 'circle 2800,1400 2800,2000' \\
+                   -fill 'rgba(236,72,153,0.02)' \\
+                   -draw 'circle 900,1600 900,2100' \\
+                \) -composite \\
+                /usr/share/backgrounds/cursoros-dark.png 2>/dev/null || \\
+            convert -size 3840x2160 xc:'#0d1117' /usr/share/backgrounds/cursoros-dark.png
+
+            # --- Light wallpaper variant ---
+            convert -size 3840x2160 \\
+                gradient:'#e8eaed'-'#c4c7cc' \\
+                -rotate 135 \\
+                /usr/share/backgrounds/cursoros-light.png 2>/dev/null || \\
+            convert -size 3840x2160 xc:'#e8eaed' /usr/share/backgrounds/cursoros-light.png
+
+            # --- Accent wallpaper ---
+            convert -size 3840x2160 \\
+                \( -size 3840x2160 gradient:'#0a192f'-'#112240' -rotate 135 \) \\
+                \( -size 3840x2160 xc:none \\
+                   -fill 'rgba(100,255,218,0.04)' \\
+                   -draw 'circle 2400,900 2400,1800' \\
+                \) -composite \\
+                /usr/share/backgrounds/cursoros-ocean.png 2>/dev/null || \\
+            convert -size 3840x2160 xc:'#0a192f' /usr/share/backgrounds/cursoros-ocean.png
+
+            # --- Default wallpaper symlink ---
+            ln -sf /usr/share/backgrounds/cursoros-dark.png /usr/share/backgrounds/cursoros-wallpaper.png
+
             apt-get remove -y -qq imagemagick 2>/dev/null || true
             apt-get autoremove -y -qq 2>/dev/null || true
         fi
     "
 
-    # --- OS Release Info ---
+    # --- OS Release ---
     cat > "${ROOTFS_DIR}/etc/os-release" <<EOF
 PRETTY_NAME="${OS_NAME} ${OS_VERSION} (${OS_CODENAME})"
 NAME="${OS_NAME}"
@@ -377,6 +436,7 @@ ID=cursoros
 ID_LIKE=debian
 HOME_URL="https://github.com/emailinuse804-png/emailinuse804-png.github.io"
 BUG_REPORT_URL="https://github.com/emailinuse804-png/emailinuse804-png.github.io/issues"
+SUPPORT_URL="https://github.com/emailinuse804-png/emailinuse804-png.github.io"
 EOF
 
     cat > "${ROOTFS_DIR}/etc/lsb-release" <<EOF
@@ -386,162 +446,188 @@ DISTRIB_CODENAME=${OS_CODENAME}
 DISTRIB_DESCRIPTION="${OS_NAME} ${OS_VERSION} (${OS_CODENAME})"
 EOF
 
+    # --- Login Screen ---
+    cat > "${ROOTFS_DIR}/etc/lightdm/lightdm-gtk-greeter.conf" <<'EOF'
+[greeter]
+background=/usr/share/backgrounds/cursoros-dark.png
+theme-name=WhiteSur-Dark
+icon-theme-name=WhiteSur-dark
+font-name=Noto Sans 11
+cursor-theme-name=WhiteSur-cursors
+cursor-theme-size=24
+indicators=~host;~spacer;~session;~language;~a11y;~clock;~power
+clock-format=%a %b %d  %H:%M
+panel-position=top
+position=50%,center 50%,center
+screen-reader=false
+xft-antialias=true
+xft-dpi=96
+xft-hintstyle=hintslight
+xft-rgba=rgb
+EOF
+
     # --- Issue / MOTD ---
     cat > "${ROOTFS_DIR}/etc/issue" <<EOF
 
-  ______                           ____  _____
- / ____/_  _______________  _____/ __ \\/ ___/
-/ /   / / / / ___/ ___/ _ \\/ ___/ / / /\\__ \\
-/ /___/ /_/ / /  (__  ) __/ /  / /_/ /___/ /
-\\____/\\__,_/_/  /____/\\___/_/   \\____//____/
+     ██████╗██╗   ██╗██████╗ ███████╗ ██████╗ ██████╗  ██████╗ ███████╗
+    ██╔════╝██║   ██║██╔══██╗██╔════╝██╔═══██╗██╔══██╗██╔═══██╗██╔════╝
+    ██║     ██║   ██║██████╔╝███████╗██║   ██║██████╔╝██║   ██║███████╗
+    ██║     ██║   ██║██╔══██╗╚════██║██║   ██║██╔══██╗██║   ██║╚════██║
+    ╚██████╗╚██████╔╝██║  ██║███████║╚██████╔╝██║  ██║╚██████╔╝███████║
+     ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝
 
-  ${OS_NAME} ${OS_VERSION} "${OS_CODENAME}" - \\n \\l
+    ${OS_NAME} ${OS_VERSION} "${OS_CODENAME}" — \\n \\l
 
 EOF
 
     cat > "${ROOTFS_DIR}/etc/motd" <<EOF
 
-  Welcome to CursorOS ${OS_VERSION} "${OS_CODENAME}"!
-  Built with Cursor AI
-
-  Quick start:
-    - Type 'install-ollama' to install Ollama AI
-    - Type 'cursoros-help' for system commands
-    - Default user: cursor / password: cursor
+  Welcome to CursorOS ${OS_VERSION} "${OS_CODENAME}"
+  ─────────────────────────────────
+  Type 'cursoros-help' for commands
+  Type 'install-ollama' for AI
 
 EOF
 
-    # --- LightDM Greeter Branding ---
-    mkdir -p "${ROOTFS_DIR}/etc/lightdm"
-    cat > "${ROOTFS_DIR}/etc/lightdm/lightdm-gtk-greeter.conf" <<EOF
-[greeter]
-background=/usr/share/backgrounds/cursoros-wallpaper.png
-theme-name=Adwaita-dark
-icon-theme-name=Adwaita
-font-name=Noto Sans 11
-indicators=~host;~spacer;~session;~language;~a11y;~clock;~power
-clock-format=%H:%M
-panel-position=bottom
-position=50%,center 50%,center
-EOF
+    # --- Flatpak remote ---
+    chroot "${ROOTFS_DIR}" bash -c "
+        flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo 2>/dev/null || true
+    "
 
-    # --- Neofetch Config ---
-    mkdir -p "${ROOTFS_DIR}/home/cursor/.config/neofetch"
-    cat > "${ROOTFS_DIR}/home/cursor/.config/neofetch/config.conf" <<EOF
-print_info() {
-    info title
-    info underline
-    info "OS" distro
-    info "Host" model
-    info "Kernel" kernel
-    info "Uptime" uptime
-    info "Packages" packages
-    info "Shell" shell
-    info "DE" de
-    info "WM" wm
-    info "Terminal" term
-    info "CPU" cpu
-    info "GPU" gpu
-    info "Memory" memory
-    info "Disk" disk
-    info "Local IP" local_ip
-    info cols
-}
-ascii_distro="auto"
-EOF
-
-    # --- Custom Bash Profile ---
-    cat > "${ROOTFS_DIR}/home/cursor/.bashrc" <<'BASHRC'
-# CursorOS Bash Configuration
-export PATH="/usr/local/bin:$PATH"
-
-# Colors
-export PS1='\[\033[01;32m\]\u@cursoros\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
-
-# Aliases
-alias ll='ls -alF --color=auto'
-alias la='ls -A --color=auto'
-alias l='ls -CF --color=auto'
-alias grep='grep --color=auto'
-alias update='sudo apt update && sudo apt upgrade -y'
-alias install='sudo apt install'
-alias remove='sudo apt remove'
-alias search='apt search'
-alias sysinfo='neofetch'
-alias diskinfo='df -h'
-alias meminfo='free -h'
-alias ports='sudo netstat -tlnp'
-
-# Welcome message on first terminal
-if [ -z "$CURSOROS_WELCOMED" ]; then
-    export CURSOROS_WELCOMED=1
-    echo ""
-    echo -e "\033[36m  Welcome to CursorOS!\033[0m"
-    echo -e "  Type \033[33m'cursoros-help'\033[0m for useful commands."
-    echo ""
-fi
-
-# Enable bash completion
-if [ -f /etc/bash_completion ]; then
-    . /etc/bash_completion
-fi
-BASHRC
-
-    # Fix ownership
+    # --- Fix ownership ---
     chroot "${ROOTFS_DIR}" chown -R 1000:1000 /home/cursor/ 2>/dev/null || true
 
     log_info "Branding applied."
 }
 
 # ============================================================================
-# Phase 6: Install Custom Scripts
+# Phase 7: Plymouth Boot Splash
+# ============================================================================
+install_plymouth_theme() {
+    log_section "Phase 7: Plymouth Boot Splash"
+
+    THEME_DIR="${ROOTFS_DIR}/usr/share/plymouth/themes/cursoros"
+    mkdir -p "${THEME_DIR}"
+
+    cat > "${THEME_DIR}/cursoros.plymouth" <<'EOF'
+[Plymouth Theme]
+Name=CursorOS
+Description=CursorOS boot splash
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/cursoros
+ScriptFile=/usr/share/plymouth/themes/cursoros/cursoros.script
+EOF
+
+    cat > "${THEME_DIR}/cursoros.script" <<'PLYSCRIPT'
+// CursorOS Plymouth Boot Splash - Animated spinner with logo text
+
+Window.SetBackgroundTopColor(0.05, 0.07, 0.09);
+Window.SetBackgroundBottomColor(0.08, 0.10, 0.13);
+
+// Centered status text
+message_sprite = Sprite();
+fun message_callback(text) {
+    my_image = Image.Text(text, 0.63, 0.68, 0.75, 1, "Noto Sans 14");
+    message_sprite.SetImage(my_image);
+    message_sprite.SetX(Window.GetWidth() / 2 - my_image.GetWidth() / 2);
+    message_sprite.SetY(Window.GetHeight() * 0.65);
+}
+Plymouth.SetMessageFunction(message_callback);
+
+// Title text
+title_image = Image.Text("CursorOS", 0.00, 0.83, 1.00, 1, "Noto Sans Bold 42");
+title_sprite = Sprite(title_image);
+title_sprite.SetX(Window.GetWidth() / 2 - title_image.GetWidth() / 2);
+title_sprite.SetY(Window.GetHeight() * 0.40);
+
+// Subtitle
+sub_image = Image.Text("Horizon", 0.50, 0.55, 0.60, 1, "Noto Sans 16");
+sub_sprite = Sprite(sub_image);
+sub_sprite.SetX(Window.GetWidth() / 2 - sub_image.GetWidth() / 2);
+sub_sprite.SetY(Window.GetHeight() * 0.40 + title_image.GetHeight() + 8);
+
+// Spinner dots
+NUM_DOTS = 8;
+dot_sprites = [];
+dot_angle = 0;
+
+for (i = 0; i < NUM_DOTS; i++) {
+    dot_sprites[i] = Sprite();
+    dot_image = Image.Text("●", 0.00, 0.83 * (i / NUM_DOTS), 1.00 * (i / NUM_DOTS + 0.3), 1, "Noto Sans 12");
+    dot_sprites[i].SetImage(dot_image);
+}
+
+fun refresh_callback() {
+    dot_angle += 0.05;
+    cx = Window.GetWidth() / 2;
+    cy = Window.GetHeight() * 0.58;
+    for (i = 0; i < NUM_DOTS; i++) {
+        a = dot_angle + i * (2 * 3.14159 / NUM_DOTS);
+        dx = Math.Cos(a) * 30;
+        dy = Math.Sin(a) * 30;
+        dot_sprites[i].SetX(cx + dx - 4);
+        dot_sprites[i].SetY(cy + dy - 4);
+        dot_sprites[i].SetOpacity(0.3 + 0.7 * (i / NUM_DOTS));
+    }
+}
+Plymouth.SetRefreshFunction(refresh_callback);
+
+// Password prompt
+fun display_password_callback(prompt, bullets) {
+    pwd_image = Image.Text(prompt, 0.63, 0.68, 0.75, 1, "Noto Sans 14");
+    message_sprite.SetImage(pwd_image);
+    message_sprite.SetX(Window.GetWidth() / 2 - pwd_image.GetWidth() / 2);
+    message_sprite.SetY(Window.GetHeight() * 0.70);
+}
+Plymouth.SetDisplayPasswordFunction(display_password_callback);
+PLYSCRIPT
+
+    # Set as default Plymouth theme
+    chroot "${ROOTFS_DIR}" bash -c "
+        plymouth-set-default-theme cursoros 2>/dev/null || true
+        update-initramfs -u 2>/dev/null || true
+    "
+
+    log_info "Plymouth boot splash installed."
+}
+
+# ============================================================================
+# Phase 8: Install Custom Scripts
 # ============================================================================
 install_scripts() {
-    log_section "Installing CursorOS Scripts"
-
-    # Copy scripts from the scripts directory
+    log_section "Phase 8: Install CursorOS Scripts"
     if [ -d "${SCRIPT_DIR}/scripts" ]; then
         for script in "${SCRIPT_DIR}/scripts"/*.sh; do
-            if [ -f "$script" ]; then
-                name=$(basename "$script" .sh)
-                cp "$script" "${ROOTFS_DIR}/usr/local/bin/${name}"
-                chmod +x "${ROOTFS_DIR}/usr/local/bin/${name}"
-                log_info "Installed script: ${name}"
-            fi
+            [ -f "$script" ] || continue
+            name=$(basename "$script" .sh)
+            cp "$script" "${ROOTFS_DIR}/usr/local/bin/${name}"
+            chmod +x "${ROOTFS_DIR}/usr/local/bin/${name}"
+            log_info "  → ${name}"
         done
     fi
-
-    # Copy desktop entries
-    if [ -d "${SCRIPT_DIR}/includes/usr/share/applications" ]; then
-        cp -r "${SCRIPT_DIR}/includes/usr/share/applications/"* \
-              "${ROOTFS_DIR}/usr/share/applications/" 2>/dev/null || true
-    fi
-
+    cp -r "${SCRIPT_DIR}/includes/usr/share/applications/"* \
+          "${ROOTFS_DIR}/usr/share/applications/" 2>/dev/null || true
     log_info "Scripts installed."
 }
 
 # ============================================================================
-# Phase 7: Configure Services
+# Phase 9: Configure Services
 # ============================================================================
 configure_services() {
-    log_section "Configuring System Services"
-
+    log_section "Phase 9: Configure Services"
     chroot "${ROOTFS_DIR}" bash -c "
-        # Enable NetworkManager
         systemctl enable NetworkManager 2>/dev/null || true
-
-        # Enable LightDM
         systemctl enable lightdm 2>/dev/null || true
-
-        # Disable unnecessary services for live boot
+        systemctl enable bluetooth 2>/dev/null || true
+        systemctl enable cups 2>/dev/null || true
+        systemctl enable acpid 2>/dev/null || true
+        systemctl enable dbus 2>/dev/null || true
         systemctl disable apt-daily.timer 2>/dev/null || true
         systemctl disable apt-daily-upgrade.timer 2>/dev/null || true
-
-        # Enable DBUS
-        systemctl enable dbus 2>/dev/null || true
     "
 
-    # Configure NetworkManager
     cat > "${ROOTFS_DIR}/etc/NetworkManager/NetworkManager.conf" <<EOF
 [main]
 plugins=ifupdown,keyfile
@@ -554,115 +640,112 @@ managed=true
 wifi.scan-rand-mac-address=no
 EOF
 
+    # Enable Plymouth in GRUB
+    mkdir -p "${ROOTFS_DIR}/etc/default"
+    cat > "${ROOTFS_DIR}/etc/default/grub" <<'EOF'
+GRUB_DEFAULT=0
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="CursorOS"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=3"
+GRUB_CMDLINE_LINUX=""
+GRUB_GFXMODE=1920x1080
+EOF
+
     log_info "Services configured."
 }
 
 # ============================================================================
-# Phase 8: Build Squashfs & ISO
+# Phase 10: Build ISO
 # ============================================================================
 build_iso() {
-    log_section "Building ISO Image"
-
-    # Clean up chroot mounts
+    log_section "Phase 10: Build ISO Image"
     cleanup
 
-    # --- Create ISO directory structure ---
     mkdir -p "${ISO_DIR}"/{boot/grub,live,EFI/BOOT}
 
-    # --- Create squashfs ---
-    log_info "Creating squashfs filesystem (this takes a while)..."
+    # Squashfs
+    log_info "Compressing filesystem (this takes several minutes)..."
     rm -f "${ISO_DIR}/live/filesystem.squashfs"
     mksquashfs "${ROOTFS_DIR}" "${ISO_DIR}/live/filesystem.squashfs" \
         -comp xz -Xbcj x86 -b 1M -no-duplicates -no-recovery \
-        -e boot/vmlinuz* -e boot/initrd* 2>/dev/null
+        -e boot/vmlinuz* -e boot/initrd*
 
-    # --- Copy kernel and initramfs ---
-    log_info "Copying kernel and initramfs..."
+    # Kernel + initrd
+    log_info "Copying kernel..."
     VMLINUZ=$(ls "${ROOTFS_DIR}"/boot/vmlinuz-* 2>/dev/null | sort -V | tail -1)
     INITRD=$(ls "${ROOTFS_DIR}"/boot/initrd.img-* 2>/dev/null | sort -V | tail -1)
-
-    if [ -z "$VMLINUZ" ] || [ -z "$INITRD" ]; then
-        log_error "Kernel or initramfs not found!"
-        ls -la "${ROOTFS_DIR}/boot/"
-        exit 1
-    fi
-
+    [ -z "$VMLINUZ" ] || [ -z "$INITRD" ] && { log_error "Kernel not found!"; exit 1; }
     cp "$VMLINUZ" "${ISO_DIR}/boot/vmlinuz"
     cp "$INITRD" "${ISO_DIR}/boot/initrd.img"
 
-    # --- GRUB Configuration ---
+    # GRUB config
     cat > "${ISO_DIR}/boot/grub/grub.cfg" <<'GRUBCFG'
 set timeout=5
 set default=0
 
-# CursorOS Theme
-set color_normal=white/black
-set color_highlight=cyan/black
-set menu_color_normal=white/black
-set menu_color_highlight=black/cyan
-
 insmod all_video
 insmod gfxterm
-set gfxmode=auto
+insmod png
+
+set gfxmode=1920x1080,1280x720,auto
 terminal_output gfxterm
 
-menuentry "CursorOS 2.0 - Start Desktop" --class cursoros {
+set color_normal=white/black
+set color_highlight=cyan/black
+set menu_color_normal=light-gray/black
+set menu_color_highlight=white/dark-gray
+
+menuentry "  CursorOS 3.0 — Start Desktop" --class cursoros --class os {
     linux /boot/vmlinuz boot=live toram quiet splash loglevel=3 \
         username=cursor hostname=cursoros \
-        locales=en_US.UTF-8 keyboard-layouts=us \
-        timezone=UTC
+        locales=en_US.UTF-8 keyboard-layouts=us timezone=UTC
     initrd /boot/initrd.img
 }
 
-menuentry "CursorOS 2.0 - Safe Mode (no splash)" --class cursoros {
+menuentry "  CursorOS 3.0 — Safe Mode (no effects)" --class cursoros {
     linux /boot/vmlinuz boot=live toram \
         username=cursor hostname=cursoros \
-        locales=en_US.UTF-8 keyboard-layouts=us \
-        timezone=UTC nomodeset
+        locales=en_US.UTF-8 keyboard-layouts=us timezone=UTC \
+        nomodeset plymouth.enable=0
     initrd /boot/initrd.img
 }
 
-menuentry "CursorOS 2.0 - RAM Mode (copy to RAM)" --class cursoros {
+menuentry "  CursorOS 3.0 — Load to RAM (fast, needs 4GB+)" --class cursoros {
     linux /boot/vmlinuz boot=live toram=filesystem.squashfs quiet splash \
         username=cursor hostname=cursoros \
-        locales=en_US.UTF-8 keyboard-layouts=us \
-        timezone=UTC
+        locales=en_US.UTF-8 keyboard-layouts=us timezone=UTC
     initrd /boot/initrd.img
 }
 
-menuentry "CursorOS 2.0 - Text Console" --class cursoros {
+menuentry "  CursorOS 3.0 — Console Only" --class cursoros {
     linux /boot/vmlinuz boot=live toram \
         username=cursor hostname=cursoros \
-        locales=en_US.UTF-8 keyboard-layouts=us \
-        timezone=UTC systemd.unit=multi-user.target
+        locales=en_US.UTF-8 keyboard-layouts=us timezone=UTC \
+        systemd.unit=multi-user.target
     initrd /boot/initrd.img
 }
 GRUBCFG
 
-    # --- Build BIOS bootable ISO ---
-    log_info "Building ISO image..."
+    # Build ISO
+    log_info "Building ISO..."
     grub-mkrescue \
-        --locales="" \
-        --themes="" \
+        --locales="" --themes="" \
         -o "${SCRIPT_DIR}/${OUTPUT_ISO}" \
-        "${ISO_DIR}" \
-        -- \
-        -volid "CURSOROS" \
-        2>/dev/null
+        "${ISO_DIR}" -- -volid "CURSOROS" 2>/dev/null
 
     if [ -f "${SCRIPT_DIR}/${OUTPUT_ISO}" ]; then
         ISO_SIZE=$(du -h "${SCRIPT_DIR}/${OUTPUT_ISO}" | cut -f1)
-        log_info ""
-        echo -e "${GREEN}============================================${NC}"
-        echo -e "${GREEN}  CursorOS ISO built successfully!${NC}"
-        echo -e "${GREEN}  Output: ${OUTPUT_ISO} (${ISO_SIZE})${NC}"
-        echo -e "${GREEN}============================================${NC}"
         echo ""
-        echo "  Run with QEMU:"
-        echo "    qemu-system-x86_64 -cdrom ${OUTPUT_ISO} -m 2G -enable-kvm -smp 2"
+        echo -e "${GREEN}╔══════════════════════════════════════════════════════╗${NC}"
+        echo -e "${GREEN}║                                                      ║${NC}"
+        echo -e "${GREEN}║   ${WHITE}CursorOS ${OS_VERSION} \"${OS_CODENAME}\" built successfully!${GREEN}         ║${NC}"
+        echo -e "${GREEN}║                                                      ║${NC}"
+        echo -e "${GREEN}║   ${CYAN}Output: ${OUTPUT_ISO} (${ISO_SIZE})${GREEN}              ║${NC}"
+        echo -e "${GREEN}║                                                      ║${NC}"
+        echo -e "${GREEN}╚══════════════════════════════════════════════════════╝${NC}"
         echo ""
-        echo "  Write to USB:"
-        echo "    sudo dd if=${OUTPUT_ISO} of=/dev/sdX bs=4M status=progress"
+        echo "  QEMU:  qemu-system-x86_64 -cdrom ${OUTPUT_ISO} -m 4G -enable-kvm -smp 2 -vga virtio"
+        echo "  USB:   sudo dd if=${OUTPUT_ISO} of=/dev/sdX bs=4M status=progress"
         echo ""
     else
         log_error "ISO build failed!"
@@ -675,24 +758,21 @@ GRUBCFG
 # ============================================================================
 main() {
     echo ""
-    echo -e "${CYAN}  ______                           ____  _____${NC}"
-    echo -e "${CYAN} / ____/_  _______________  _____/ __ \\/ ___/${NC}"
-    echo -e "${CYAN}/ /   / / / / ___/ ___/ _ \\/ ___/ / / /\\__ \\ ${NC}"
-    echo -e "${CYAN}/ /___/ /_/ / /  (__  ) __/ /  / /_/ /___/ / ${NC}"
-    echo -e "${CYAN}\\____/\\__,_/_/  /____/\\___/_/   \\____//____/  ${NC}"
+    echo -e "${CYAN}     ██████╗██╗   ██╗██████╗ ███████╗ ██████╗ ██████╗  ██████╗ ███████╗${NC}"
+    echo -e "${CYAN}    ██╔════╝██║   ██║██╔══██╗██╔════╝██╔═══██╗██╔══██╗██╔═══██╗██╔════╝${NC}"
+    echo -e "${CYAN}    ██║     ██║   ██║██████╔╝███████╗██║   ██║██████╔╝██║   ██║███████╗${NC}"
+    echo -e "${CYAN}    ██║     ██║   ██║██╔══██╗╚════██║██║   ██║██╔══██╗██║   ██║╚════██║${NC}"
+    echo -e "${CYAN}    ╚██████╗╚██████╔╝██║  ██║███████║╚██████╔╝██║  ██║╚██████╔╝███████║${NC}"
+    echo -e "${CYAN}     ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝${NC}"
     echo ""
-    echo -e "  ${OS_NAME} v${OS_VERSION} \"${OS_CODENAME}\" - ISO Builder"
+    echo -e "  ${WHITE}${OS_NAME} v${OS_VERSION} \"${OS_CODENAME}\"${NC} — Premium Desktop ISO Builder"
     echo ""
 
     check_root
 
     if [ "$1" = "--clean" ]; then
-        log_info "Cleaning build directory..."
-        cleanup
-        rm -rf "${BUILD_DIR}"
-        rm -f "${SCRIPT_DIR}/${OUTPUT_ISO}"
-        log_info "Clean complete."
-        exit 0
+        cleanup; rm -rf "${BUILD_DIR}"; rm -f "${SCRIPT_DIR}/${OUTPUT_ISO}"
+        log_info "Cleaned."; exit 0
     fi
 
     START_TIME=$(date +%s)
@@ -701,17 +781,19 @@ main() {
     bootstrap_rootfs
     configure_base
     install_packages
+    if [ "$1" != "--skip-themes" ]; then
+        install_premium_theme
+    fi
     configure_users
     apply_branding
+    install_plymouth_theme
     install_scripts
     configure_services
     build_iso
 
     END_TIME=$(date +%s)
     ELAPSED=$(( END_TIME - START_TIME ))
-    MINUTES=$(( ELAPSED / 60 ))
-    SECONDS=$(( ELAPSED % 60 ))
-    log_info "Total build time: ${MINUTES}m ${SECONDS}s"
+    log_info "Total build time: $(( ELAPSED / 60 ))m $(( ELAPSED % 60 ))s"
 }
 
 main "$@"

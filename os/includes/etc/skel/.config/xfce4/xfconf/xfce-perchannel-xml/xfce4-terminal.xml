@@ -1,23 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  CursorOS - Terminal Configuration
-  Dark theme terminal with good defaults
+  CursorOS v3 - Terminal: premium dark theme matching the desktop
 -->
 <channel name="xfce4-terminal" version="1.0">
   <property name="background-mode" type="string" value="TERMINAL_BACKGROUND_TRANSPARENT"/>
-  <property name="background-darkness" type="double" value="0.92"/>
-  <property name="color-foreground" type="string" value="#c0c5ce"/>
-  <property name="color-background" type="string" value="#0a0a2e"/>
-  <property name="color-cursor" type="string" value="#00d4ff"/>
+  <property name="background-darkness" type="double" value="0.88"/>
+  <property name="color-foreground" type="string" value="#c9d1d9"/>
+  <property name="color-background" type="string" value="#0d1117"/>
+  <property name="color-cursor" type="string" value="#58a6ff"/>
   <property name="color-cursor-use-default" type="bool" value="false"/>
-  <property name="font-name" type="string" value="Noto Sans Mono 11"/>
+  <property name="color-selection" type="string" value="#264f78"/>
+  <property name="color-selection-use-default" type="bool" value="false"/>
+  <property name="color-bold-is-bright" type="bool" value="true"/>
+  <property name="font-name" type="string" value="Fira Code 11"/>
   <property name="font-use-system" type="bool" value="false"/>
   <property name="misc-always-show-tabs" type="bool" value="false"/>
   <property name="misc-cursor-blinks" type="bool" value="true"/>
   <property name="misc-cursor-shape" type="string" value="TERMINAL_CURSOR_SHAPE_IBEAM"/>
-  <property name="misc-default-geometry" type="string" value="100x30"/>
-  <property name="misc-menubar-default" type="bool" value="true"/>
+  <property name="misc-default-geometry" type="string" value="110x32"/>
+  <property name="misc-menubar-default" type="bool" value="false"/>
   <property name="scrolling-unlimited" type="bool" value="true"/>
-  <property name="title-initial" type="string" value="CursorOS Terminal"/>
-  <property name="color-palette" type="string" value="#2b303b;#bf616a;#a3be8c;#ebcb8b;#8fa1b3;#b48ead;#96b5b4;#c0c5ce;#65737e;#bf616a;#a3be8c;#ebcb8b;#8fa1b3;#b48ead;#96b5b4;#eff1f5"/>
+  <property name="scrolling-bar" type="string" value="TERMINAL_SCROLLBAR_NONE"/>
+  <property name="title-initial" type="string" value="Terminal"/>
+  <property name="color-palette" type="string" value="#0d1117;#ff7b72;#7ee787;#d29922;#58a6ff;#bc8cff;#39d353;#c9d1d9;#484f58;#ffa198;#56d364;#e3b341;#79c0ff;#d2a8ff;#56d364;#f0f6fc"/>
+  <property name="tab-activity-color" type="string" value="#58a6ff"/>
 </channel>

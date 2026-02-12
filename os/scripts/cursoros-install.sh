@@ -1,105 +1,61 @@
 #!/bin/bash
-# ============================================================================
-# CursorOS - Friendly Package Installer
-# ============================================================================
-# A user-friendly wrapper around apt that makes installing software easy.
-#
-# Usage:
-#   cursoros-install <package>       # Install a package
-#   cursoros-install --search <q>    # Search for packages
-#   cursoros-install --list          # List installed packages
-#   cursoros-install --remove <pkg>  # Remove a package
-#   cursoros-install --popular       # Show popular packages
-# ============================================================================
+# CursorOS v3 - Friendly Package Installer
 
-CYAN='\033[0;36m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m'
+C='\033[38;5;39m'; G='\033[38;5;114m'; Y='\033[38;5;222m'
+R='\033[38;5;203m'; D='\033[38;5;245m'; W='\033[1;37m'; N='\033[0m'
 
 show_popular() {
-    echo -e "${CYAN}=== Popular Packages ===${NC}"
+    echo -e "\n  ${W}Popular Packages${N}\n"
+
+    echo -e "  ${C}AI / Machine Learning${N}"
+    echo -e "    ${G}install-ollama${N}         ${D}Ollama (local LLMs)${N}"
+    echo -e "    ${G}python3-pip${N}            ${D}Python packages${N}"
     echo ""
-    echo -e "${GREEN}  AI / Machine Learning:${NC}"
-    echo "    install-ollama         - Ollama (local AI models)"
-    echo "    python3-pip            - Python package manager"
+    echo -e "  ${C}Development${N}"
+    echo -e "    ${G}build-essential${N}         ${D}GCC, Make, etc.${N}"
+    echo -e "    ${G}nodejs npm${N}              ${D}Node.js${N}"
+    echo -e "    ${G}python3 python3-venv${N}    ${D}Python 3${N}"
+    echo -e "    ${G}golang${N}                  ${D}Go language${N}"
+    echo -e "    ${G}rustc cargo${N}             ${D}Rust language${N}"
+    echo -e "    ${G}docker.io${N}               ${D}Docker containers${N}"
     echo ""
-    echo -e "${GREEN}  Development:${NC}"
-    echo "    build-essential        - GCC, Make, etc."
-    echo "    nodejs npm             - Node.js runtime"
-    echo "    python3 python3-venv   - Python 3"
-    echo "    golang                 - Go programming language"
-    echo "    rustc cargo            - Rust programming language"
-    echo "    docker.io              - Docker containers"
-    echo "    git                    - Version control"
-    echo "    code                   - VS Code (use snap or .deb)"
+    echo -e "  ${C}Browsers${N}"
+    echo -e "    ${G}chromium${N}                ${D}Chromium browser${N}"
     echo ""
-    echo -e "${GREEN}  Browsers:${NC}"
-    echo "    firefox-esr            - Firefox (pre-installed)"
-    echo "    chromium               - Chromium browser"
+    echo -e "  ${C}Multimedia${N}"
+    echo -e "    ${G}obs-studio${N}              ${D}Screen recording${N}"
+    echo -e "    ${G}audacity${N}                ${D}Audio editor${N}"
+    echo -e "    ${G}kdenlive${N}                ${D}Video editor${N}"
+    echo -e "    ${G}blender${N}                 ${D}3D modeling${N}"
     echo ""
-    echo -e "${GREEN}  Multimedia:${NC}"
-    echo "    vlc                    - VLC media player"
-    echo "    gimp                   - Image editor"
-    echo "    audacity               - Audio editor"
-    echo "    obs-studio             - Screen recording"
+    echo -e "  ${C}Productivity${N}"
+    echo -e "    ${G}thunderbird${N}             ${D}Email client${N}"
+    echo -e "    ${G}keepassxc${N}               ${D}Password manager${N}"
+    echo -e "    ${G}syncthing${N}               ${D}File sync${N}"
     echo ""
-    echo -e "${GREEN}  Office:${NC}"
-    echo "    libreoffice            - Office suite"
+    echo -e "  ${C}Gaming${N}"
+    echo -e "    ${G}steam${N}                   ${D}Steam client${N}"
+    echo -e "    ${G}lutris${N}                  ${D}Game launcher${N}"
     echo ""
-    echo -e "${GREEN}  Gaming:${NC}"
-    echo "    steam                  - Steam client"
+    echo -e "  ${D}Or browse the App Store (GNOME Software) in the dock!${N}"
     echo ""
-    echo -e "${GREEN}  Utilities:${NC}"
-    echo "    neofetch               - System info (pre-installed)"
-    echo "    htop                   - Process viewer (pre-installed)"
-    echo "    tmux                   - Terminal multiplexer"
-    echo "    ranger                 - Terminal file manager"
-    echo ""
-    echo "  Install any package: cursoros-install <package-name>"
 }
 
 if [ $# -eq 0 ]; then
-    echo -e "${CYAN}CursorOS Package Installer${NC}"
-    echo ""
-    echo "Usage:"
-    echo "  cursoros-install <package>       - Install a package"
-    echo "  cursoros-install --search <q>    - Search packages"
-    echo "  cursoros-install --list          - List installed"
-    echo "  cursoros-install --remove <pkg>  - Remove a package"
-    echo "  cursoros-install --popular       - Show popular packages"
-    exit 0
+    echo -e "\n  ${W}CursorOS Package Installer${N}\n"
+    echo -e "  ${Y}cursoros-install <package>${N}       Install"
+    echo -e "  ${Y}cursoros-install --search <q>${N}    Search"
+    echo -e "  ${Y}cursoros-install --list${N}          List installed"
+    echo -e "  ${Y}cursoros-install --remove <pkg>${N}  Remove"
+    echo -e "  ${Y}cursoros-install --popular${N}       Popular packages"
+    echo ""; exit 0
 fi
 
 case "$1" in
-    --search|-s)
-        shift
-        echo -e "${CYAN}Searching for '$1'...${NC}"
-        apt search "$1" 2>/dev/null
-        ;;
-    --list|-l)
-        echo -e "${CYAN}Installed packages:${NC}"
-        dpkg --get-selections | grep -v deinstall | awk '{print "  " $1}'
-        ;;
-    --remove|-r)
-        shift
-        echo -e "${YELLOW}Removing $1...${NC}"
-        sudo apt remove -y "$1"
-        echo -e "${GREEN}Done.${NC}"
-        ;;
-    --popular|-p)
-        show_popular
-        ;;
-    --help|-h)
-        echo "Usage: cursoros-install [--search|--list|--remove|--popular] [package]"
-        ;;
-    *)
-        echo -e "${CYAN}Installing: $@${NC}"
-        echo ""
-        sudo apt update -qq
-        sudo apt install -y "$@"
-        echo ""
-        echo -e "${GREEN}Installation complete!${NC}"
-        ;;
+    --search|-s) shift; echo -e "\n  ${C}Searching '$1'...${N}\n"; apt search "$1" 2>/dev/null ;;
+    --list|-l) dpkg --get-selections | grep -v deinstall | awk '{print "  " $1}' | less ;;
+    --remove|-r) shift; echo -e "  ${Y}Removing $1...${N}"; sudo apt remove -y "$1"; echo -e "  ${G}✓ Done${N}" ;;
+    --popular|-p) show_popular ;;
+    --help|-h) echo "Usage: cursoros-install [--search|--list|--remove|--popular] [package]" ;;
+    *) echo -e "\n  ${C}Installing: $@${N}\n"; sudo apt update -qq && sudo apt install -y "$@" && echo -e "\n  ${G}✓ Done${N}\n" ;;
 esac

@@ -1,20 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  CursorOS - XFCE4 Panel Configuration
-  Windows-like layout: bottom taskbar with start menu, task list, system tray, clock
+  CursorOS v3 - XFCE4 Panel: macOS-inspired top menu bar
+  The bottom dock is handled by Plank (separate app)
 -->
 <channel name="xfce4-panel" version="1.0">
-  <!-- Panel 1: Bottom Taskbar (Windows-like) -->
   <property name="configver" type="int" value="2"/>
   <property name="panels" type="array">
     <value type="int" value="1"/>
   </property>
+
+  <!-- Panel 1: Top Menu Bar (macOS style) -->
   <property name="panel-1" type="empty">
-    <property name="position" type="string" value="p=8;x=0;y=0"/>
+    <property name="position" type="string" value="p=6;x=0;y=0"/>
     <property name="length" type="uint" value="100"/>
     <property name="position-locked" type="bool" value="true"/>
-    <property name="size" type="uint" value="40"/>
-    <property name="background-style" type="uint" value="0"/>
+    <property name="size" type="uint" value="28"/>
+    <property name="background-style" type="uint" value="1"/>
+    <property name="background-rgba" type="array">
+      <value type="double" value="0.08"/>
+      <value type="double" value="0.09"/>
+      <value type="double" value="0.12"/>
+      <value type="double" value="0.92"/>
+    </property>
     <property name="plugin-ids" type="array">
       <value type="int" value="1"/>
       <value type="int" value="2"/>
@@ -27,52 +34,72 @@
       <value type="int" value="9"/>
       <value type="int" value="10"/>
       <value type="int" value="11"/>
+      <value type="int" value="12"/>
+      <value type="int" value="13"/>
     </property>
   </property>
 
-  <!-- Plugin 1: Whisker Menu (Start Menu) -->
   <property name="plugins" type="empty">
+    <!-- Left: App Menu -->
     <property name="plugin-1" type="string" value="whiskermenu"/>
+
     <property name="plugin-2" type="string" value="separator">
       <property name="style" type="uint" value="0"/>
     </property>
-    <!-- Plugin 3: Show Desktop Button -->
-    <property name="plugin-3" type="string" value="showdesktop"/>
-    <!-- Plugin 4: Directory Menu (File Manager shortcut) -->
-    <property name="plugin-4" type="string" value="directorymenu"/>
-    <!-- Plugin 5: Separator -->
-    <property name="plugin-5" type="string" value="separator">
-      <property name="expand" type="bool" value="false"/>
+
+    <!-- Left: Places (quick folder access) -->
+    <property name="plugin-3" type="string" value="places"/>
+
+    <property name="plugin-4" type="string" value="separator">
       <property name="style" type="uint" value="0"/>
     </property>
-    <!-- Plugin 6: Tasklist (Window buttons) -->
-    <property name="plugin-6" type="string" value="tasklist">
-      <property name="flat-buttons" type="bool" value="true"/>
-      <property name="show-handle" type="bool" value="false"/>
-      <property name="show-labels" type="bool" value="true"/>
-      <property name="sort-order" type="uint" value="4"/>
-      <property name="window-scrolling" type="bool" value="false"/>
-      <property name="middle-click" type="uint" value="1"/>
+
+    <!-- Expanding spacer (pushes right items to the right) -->
+    <property name="plugin-5" type="string" value="separator">
+      <property name="expand" type="bool" value="true"/>
+      <property name="style" type="uint" value="0"/>
     </property>
-    <!-- Plugin 7: Separator (expanding) -->
+
+    <!-- Center: Clock + Date -->
+    <property name="plugin-6" type="string" value="datetime">
+      <property name="layout" type="uint" value="3"/>
+      <property name="date-font" type="string" value="Noto Sans Bold 9"/>
+      <property name="time-font" type="string" value="Noto Sans Bold 9"/>
+      <property name="date-format" type="string" value="%a %b %d"/>
+      <property name="time-format" type="string" value="%H:%M"/>
+    </property>
+
+    <!-- Expanding spacer -->
     <property name="plugin-7" type="string" value="separator">
       <property name="expand" type="bool" value="true"/>
       <property name="style" type="uint" value="0"/>
     </property>
-    <!-- Plugin 8: System Tray -->
+
+    <!-- Right: System tray -->
     <property name="plugin-8" type="string" value="systray">
       <property name="square-icons" type="bool" value="true"/>
+      <property name="icon-size" type="int" value="18"/>
     </property>
-    <!-- Plugin 9: PulseAudio -->
-    <property name="plugin-9" type="string" value="pulseaudio">
+
+    <property name="plugin-9" type="string" value="statusnotifier">
+      <property name="icon-size" type="int" value="18"/>
+    </property>
+
+    <!-- Right: Volume -->
+    <property name="plugin-10" type="string" value="pulseaudio">
       <property name="enable-keyboard-shortcuts" type="bool" value="true"/>
+      <property name="show-notifications" type="bool" value="true"/>
     </property>
-    <!-- Plugin 10: Notification Area -->
-    <property name="plugin-10" type="string" value="notification-plugin"/>
-    <!-- Plugin 11: Clock -->
-    <property name="plugin-11" type="string" value="clock">
-      <property name="digital-format" type="string" value="%I:%M %p"/>
-      <property name="tooltip-format" type="string" value="%A, %B %d, %Y"/>
+
+    <!-- Right: Network/Bluetooth indicators -->
+    <property name="plugin-11" type="string" value="notification-plugin"/>
+
+    <!-- Right: Power -->
+    <property name="plugin-12" type="string" value="power-manager-plugin"/>
+
+    <!-- Right: User menu -->
+    <property name="plugin-13" type="string" value="separator">
+      <property name="style" type="uint" value="0"/>
     </property>
   </property>
 </channel>

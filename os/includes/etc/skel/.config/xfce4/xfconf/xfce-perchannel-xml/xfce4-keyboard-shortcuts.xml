@@ -1,43 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  CursorOS - Keyboard Shortcuts
-  Windows-compatible shortcuts
+  CursorOS v3 - Keyboard Shortcuts (macOS+Windows hybrid)
 -->
 <channel name="xfce4-keyboard-shortcuts" version="1.0">
   <property name="commands" type="empty">
     <property name="custom" type="empty">
-      <!-- Ctrl+Alt+T = Terminal (like Ubuntu) -->
+      <!-- Terminal -->
       <property name="&lt;Primary&gt;&lt;Alt&gt;t" type="string" value="xfce4-terminal"/>
-      <!-- Ctrl+Alt+Delete = Task Manager -->
+      <!-- Task Manager -->
       <property name="&lt;Primary&gt;&lt;Alt&gt;Delete" type="string" value="xfce4-taskmanager"/>
-      <!-- Super = App Menu -->
+      <!-- App Menu -->
       <property name="Super_L" type="string" value="xfce4-popup-whiskermenu"/>
-      <!-- Print Screen = Screenshot -->
-      <property name="Print" type="string" value="xfce4-screenshooter"/>
-      <!-- Super+E = File Manager (like Windows) -->
+      <!-- Screenshot -->
+      <property name="Print" type="string" value="flameshot gui"/>
+      <!-- File Manager -->
       <property name="&lt;Super&gt;e" type="string" value="thunar"/>
-      <!-- Super+L = Lock Screen -->
+      <!-- Lock Screen -->
       <property name="&lt;Super&gt;l" type="string" value="xflock4"/>
-      <!-- Alt+F2 = Run dialog -->
+      <!-- Run dialog -->
       <property name="&lt;Alt&gt;F2" type="string" value="xfce4-appfinder --collapsed"/>
+      <!-- App Finder (like Spotlight) -->
+      <property name="&lt;Super&gt;space" type="string" value="xfce4-appfinder"/>
+      <!-- Settings -->
+      <property name="&lt;Super&gt;i" type="string" value="xfce4-settings-manager"/>
+      <!-- Browser -->
+      <property name="&lt;Super&gt;b" type="string" value="firefox-esr"/>
+      <!-- Calculator -->
+      <property name="&lt;Super&gt;c" type="string" value="gnome-calculator"/>
+      <!-- Clipboard -->
+      <property name="&lt;Super&gt;v" type="string" value="xfce4-clipman-history"/>
     </property>
   </property>
   <property name="xfwm4" type="empty">
     <property name="custom" type="empty">
-      <!-- Alt+F4 = Close window -->
       <property name="&lt;Alt&gt;F4" type="string" value="close_window_key"/>
-      <!-- Alt+Tab = Switch windows -->
       <property name="&lt;Alt&gt;Tab" type="string" value="cycle_windows_key"/>
-      <!-- Super+D = Show desktop -->
       <property name="&lt;Super&gt;d" type="string" value="show_desktop_key"/>
-      <!-- Super+Up = Maximize -->
       <property name="&lt;Super&gt;Up" type="string" value="maximize_window_key"/>
-      <!-- Super+Down = Minimize -->
       <property name="&lt;Super&gt;Down" type="string" value="minimize_window_key"/>
-      <!-- Super+Left = Tile left -->
       <property name="&lt;Super&gt;Left" type="string" value="tile_left_key"/>
-      <!-- Super+Right = Tile right -->
       <property name="&lt;Super&gt;Right" type="string" value="tile_right_key"/>
+      <property name="&lt;Super&gt;f" type="string" value="fullscreen_key"/>
     </property>
   </property>
 </channel>

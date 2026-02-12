@@ -1,41 +1,33 @@
 #!/bin/bash
-# ============================================================================
-# CursorOS - About
-# ============================================================================
+# CursorOS v3 - About
 
-CYAN='\033[0;36m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-WHITE='\033[1;37m'
-NC='\033[0m'
+C='\033[38;5;39m'; W='\033[1;37m'; D='\033[38;5;245m'; G='\033[38;5;114m'; N='\033[0m'
 
 echo ""
-echo -e "${CYAN}  ______                           ____  _____${NC}"
-echo -e "${CYAN} / ____/_  _______________  _____/ __ \\/ ___/${NC}"
-echo -e "${CYAN}/ /   / / / / ___/ ___/ _ \\/ ___/ / / /\\__ \\ ${NC}"
-echo -e "${CYAN}/ /___/ /_/ / /  (__  ) __/ /  / /_/ /___/ / ${NC}"
-echo -e "${CYAN}\\____/\\__,_/_/  /____/\\___/_/   \\____//____/  ${NC}"
+echo -e "${C}     ██████╗██╗   ██╗██████╗ ███████╗ ██████╗ ██████╗  ██████╗ ███████╗${N}"
+echo -e "${C}    ██╔════╝██║   ██║██╔══██╗██╔════╝██╔═══██╗██╔══██╗██╔═══██╗██╔════╝${N}"
+echo -e "${C}    ██║     ██║   ██║██████╔╝███████╗██║   ██║██████╔╝██║   ██║███████╗${N}"
+echo -e "${C}    ██║     ██║   ██║██╔══██╗╚════██║██║   ██║██╔══██╗██║   ██║╚════██║${N}"
+echo -e "${C}    ╚██████╗╚██████╔╝██║  ██║███████║╚██████╔╝██║  ██║╚██████╔╝███████║${N}"
+echo -e "${C}     ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝${N}"
 echo ""
-echo -e "${WHITE}  CursorOS 2.0.0 \"Aurora\"${NC}"
+echo -e "  ${W}CursorOS${N} v3.0.0 ${D}\"Horizon\"${N}"
+echo -e "  ${D}A premium desktop operating system built with Cursor AI${N}"
 echo ""
-echo -e "${GREEN}  A custom Linux distribution built with Cursor AI.${NC}"
+echo -e "  ${G}Based on${N}         Debian 12 (Bookworm)"
+echo -e "  ${G}Desktop${N}          XFCE 4 + Plank Dock + Picom"
+echo -e "  ${G}Theme${N}            WhiteSur Dark (macOS-inspired)"
+echo -e "  ${G}Icons${N}            WhiteSur / Papirus"
+echo -e "  ${G}Compositor${N}       Picom (shadows, transparency, rounded corners)"
+echo -e "  ${G}Browser${N}          Firefox ESR"
+echo -e "  ${G}Office${N}           LibreOffice"
+echo -e "  ${G}Graphics${N}         GIMP, Inkscape"
+echo -e "  ${G}Media${N}            VLC, Parole, Cheese"
+echo -e "  ${G}Networking${N}       NetworkManager + Bluetooth"
+echo -e "  ${G}Printing${N}         CUPS"
+echo -e "  ${G}App Store${N}        GNOME Software + Flatpak"
+echo -e "  ${G}AI Ready${N}         Ollama installer built-in"
 echo ""
-echo "  Based on:        Debian 12 (Bookworm)"
-echo "  Desktop:         XFCE 4"
-echo "  Display Manager: LightDM"
-echo "  Browser:         Firefox ESR"
-echo "  Networking:      NetworkManager"
-echo ""
-echo "  Features:"
-echo "    - Full graphical desktop with Windows-like layout"
-echo "    - Web browser with internet access"
-echo "    - WiFi and Ethernet networking"
-echo "    - Software installation via apt"
-echo "    - Ollama AI platform support"
-echo "    - Live boot (runs from USB/CD without installing)"
-echo ""
-echo "  Source Code:"
-echo "    https://github.com/emailinuse804-png/emailinuse804-png.github.io"
-echo ""
-echo "  License: MIT"
+echo -e "  ${D}License: MIT${N}"
+echo -e "  ${D}https://github.com/emailinuse804-png/emailinuse804-png.github.io${N}"
 echo ""

@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
-Name=Network Manager
-Exec=nm-applet
+Name=Plank Dock
+Exec=plank
 Hidden=false
 NoDisplay=false
 X-GNOME-Autostart-enabled=true
-Comment=Network Manager System Tray Applet
+Comment=macOS-style application dock
